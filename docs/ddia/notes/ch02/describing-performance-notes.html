@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Describing Performance — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#F0F1EE;
+    --card:#FBFBFA;
+    --ink:#1F2226;
+    --ink-soft:#5C636B;
+    --rule:#CDD1D5;
+    --resp:#2F6BC4;
+    --resp-soft:#DCE6F7;
+    --thru:#B0610E;
+    --thru-soft:#F4E1CF;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+    --bar:#C3C9D1;
+    --bar-hot:#2F6BC4;
+    --code-bg:#F2F4F7;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.resp i{background:var(--resp);}
+  .swatch.thru i{background:var(--thru);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--resp);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.thru{border-left-color:var(--thru);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--resp);}
+  .def.thru b{color:var(--thru);}
+  .def.aside b{color:var(--gold);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:76ch;}
+  .grid2 .def{margin:0;}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--resp-soft);color:var(--resp);}
+  thead th.thru{background:var(--thru-soft);color:var(--thru);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);border-radius:4px;padding:.05em .3em;font-size:.88em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .diagram-small{font-size:11px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+    .grid2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — performance</p>
+  <h1>Describing Performance</h1>
+  <p class="lead">
+    The two numbers people mean by "performance" (response time and
+    throughput), why pushing one hurts the other, what "latency" means in
+    this book, and why averages mislead while percentiles don't. From DDIA,
+    Chapter 2 ("Describing Performance", "Latency and Response Time",
+    "Average, Median, and Percentiles").
+  </p>
+
+  <div class="legend">
+    <span class="swatch resp"><i></i> response time (what the user feels)</span>
+    <span class="swatch thru"><i></i> throughput (how much work, i.e. capacity and cost)</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> Two kinds of performance metric</h2>
+    <div class="grid2">
+      <div class="def">
+        <b>Response time —</b> the elapsed time from the moment a user makes
+        a request until they receive the answer. Measured in seconds (or
+        milliseconds, or microseconds).
+      </div>
+      <div class="def thru">
+        <b>Throughput —</b> the number of requests (or volume of data) per
+        second the system is processing. For a given amount of hardware there
+        is a <b>maximum throughput</b> it can handle. Measured in
+        "somethings per second."
+      </div>
+    </div>
+    <p>Mapped back onto the social-network case study:</p>
+    <table>
+      <thead><tr><th class="thru">Throughput metrics</th><th>Response time metrics</th></tr></thead>
+      <tbody>
+        <tr><td>Posts per second</td><td>Time it takes to load the home timeline</td></tr>
+        <tr><td>Timeline writes per second</td><td>Time until a post is delivered to followers</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> They're linked, because of queueing</h2>
+    <p>
+      At low throughput, a service responds quickly. As load goes up,
+      <b>response time goes up too</b>. The reason is <b>queueing</b>: on a
+      busy system, a newly arrived request usually finds the CPU already
+      handling an earlier request, so it has to wait for that one to finish.
+      As throughput approaches the maximum the hardware can handle, those
+      queueing delays <b>increase sharply</b>.
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Response time stays near the service time at low throughput, then rises sharply as throughput approaches the hardware maximum"><defs><marker id="dp-ax" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/></marker></defs><line x1="110" y1="262" x2="110" y2="22" stroke="var(--ink-soft)" stroke-width="1" marker-end="url(#dp-ax)"/><line x1="110" y1="262" x2="690" y2="262" stroke="var(--ink-soft)" stroke-width="1" marker-end="url(#dp-ax)"/><text x="118" y="24" class="diagram-text" fill="var(--ink)">response time</text><text x="690" y="282" text-anchor="end" class="diagram-text" fill="var(--ink)">throughput</text><line x1="110" y1="242" x2="426" y2="242" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4"/><text x="102" y="238" text-anchor="end" class="diagram-small" fill="var(--ink)">service time</text><text x="102" y="252" text-anchor="end" class="diagram-small" fill="var(--ink)">(unloaded)</text><line x1="620" y1="22" x2="620" y2="268" stroke="var(--thru)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="628" y="140" class="diagram-small" fill="var(--ink)">max throughput the</text><text x="628" y="154" class="diagram-small" fill="var(--ink)">hardware can handle</text><path d="M110.0,242.0 L112.5,241.9 L115.1,241.8 L117.7,241.7 L120.2,241.6 L122.8,241.5 L125.3,241.4 L127.8,241.3 L130.4,241.2 L132.9,241.1 L135.5,240.9 L138.1,240.8 L140.6,240.7 L143.1,240.6 L145.7,240.5 L148.2,240.4 L150.8,240.3 L153.3,240.1 L155.9,240.0 L158.5,239.9 L161.0,239.8 L163.6,239.7 L166.1,239.5 L168.7,239.4 L171.2,239.3 L173.8,239.1 L176.3,239.0 L178.9,238.9 L181.4,238.7 L184.0,238.6 L186.5,238.5 L189.1,238.3 L191.6,238.2 L194.2,238.0 L196.7,237.9 L199.3,237.8 L201.8,237.6 L204.4,237.5 L206.9,237.3 L209.5,237.2 L212.0,237.0 L214.6,236.8 L217.1,236.7 L219.7,236.5 L222.2,236.4 L224.8,236.2 L227.3,236.0 L229.9,235.9 L232.4,235.7 L235.0,235.5 L237.5,235.3 L240.1,235.2 L242.6,235.0 L245.2,234.8 L247.7,234.6 L250.3,234.4 L252.8,234.2 L255.4,234.0 L257.9,233.8 L260.5,233.6 L263.0,233.4 L265.6,233.2 L268.1,233.0 L270.7,232.8 L273.2,232.6 L275.8,232.4 L278.3,232.1 L280.9,231.9 L283.4,231.7 L286.0,231.5 L288.5,231.2 L291.1,231.0 L293.6,230.8 L296.2,230.5 L298.7,230.3 L301.3,230.0 L303.8,229.7 L306.4,229.5 L308.9,229.2 L311.5,228.9 L314.0,228.7 L316.6,228.4 L319.1,228.1 L321.7,227.8 L324.2,227.5 L326.8,227.2 L329.3,226.9 L331.9,226.6 L334.4,226.3 L337.0,226.0 L339.5,225.6 L342.1,225.3 L344.6,225.0 L347.2,224.6 L349.7,224.3 L352.3,223.9 L354.8,223.5 L357.4,223.2 L359.9,222.8 L362.5,222.4 L365.0,222.0 L367.6,221.6 L370.1,221.2 L372.7,220.8 L375.2,220.3 L377.8,219.9 L380.3,219.4 L382.9,219.0 L385.4,218.5 L388.0,218.0 L390.5,217.6 L393.1,217.1 L395.6,216.5 L398.2,216.0 L400.7,215.5 L403.3,214.9 L405.8,214.4 L408.4,213.8 L410.9,213.2 L413.5,212.6 L416.0,212.0 L418.6,211.4 L421.1,210.7 L423.7,210.1 L426.2,209.4 L428.8,208.7 L431.3,207.9 L433.9,207.2 L436.4,206.4 L439.0,205.7 L441.5,204.9 L444.1,204.0 L446.6,203.2 L449.2,202.3 L451.7,201.4 L454.3,200.5 L456.8,199.5 L459.4,198.5 L461.9,197.5 L464.5,196.4 L467.0,195.3 L469.6,194.2 L472.1,193.0 L474.7,191.8 L477.2,190.6 L479.8,189.3 L482.3,187.9 L484.9,186.5 L487.4,185.1 L490.0,183.6 L492.5,182.0 L495.1,180.4 L497.6,178.7 L500.2,176.9 L502.7,175.0 L505.3,173.1 L507.8,171.1 L510.4,169.0 L512.9,166.8 L515.5,164.4 L518.0,162.0 L520.6,159.4 L523.1,156.7 L525.7,153.9 L528.2,150.9 L530.8,147.7 L533.3,144.4 L535.9,140.8 L538.4,137.0 L541.0,133.0 L543.5,128.7 L546.1,124.1 L548.6,119.1 L551.2,113.9 L553.7,108.2 L556.3,102.0 L558.8,95.3 L561.4,88.1 L563.9,80.2 L566.5,71.5 L569.0,62.0 L571.6,51.5 L574.1,39.8" fill="none" stroke="var(--resp)" stroke-width="2" stroke-linecap="round"/><circle cx="365.0" cy="222.0" r="4.5" fill="var(--resp)" stroke="var(--card)" stroke-width="2"><title>50% of max throughput: response time = 2x the service time</title></circle><text x="365.0" y="210.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">50% busy: 2x</text><circle cx="518.0" cy="162.0" r="4.5" fill="var(--resp)" stroke="var(--card)" stroke-width="2"><title>80% of max throughput: response time = 5x the service time</title></circle><text x="508.0" y="166.0" text-anchor="end" class="diagram-small" fill="var(--ink)">80%: 5x</text><circle cx="569.0" cy="62.0" r="4.5" fill="var(--resp)" stroke="var(--card)" stroke-width="2"><title>90% of max throughput: response time = 10x the service time</title></circle><text x="559.0" y="66.0" text-anchor="end" class="diagram-small" fill="var(--ink)">90%: 10x</text><text x="628" y="40" class="diagram-small" fill="var(--ink-soft)">95% busy: 20x</text><text x="628" y="54" class="diagram-small" fill="var(--ink-soft)">(off the top)</text></svg>
+      <p class="caption">
+        Redrawn from Figure 2-3. The book only sketches the shape. The marked
+        points (beyond the book) come from the simplest textbook queueing
+        model (M/M/1), where response time = service time / (1 - load).
+        Half busy doubles the wait, 90% busy is 10x, and it heads to infinity
+        as load approaches 100%. Hover a dot for the exact numbers.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> When an overloaded system won't recover</h2>
+    <p>
+      A system pushed close to its throughput limit can fall into a
+      <b>vicious cycle</b> where it gets less efficient, and therefore even
+      more overloaded:
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Retry storm cycle">
+        <defs>
+          <marker id="dp-a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--thru)"/>
+          </marker>
+        </defs>
+        <g fill="var(--thru-soft)" stroke="var(--thru)" stroke-width="1.4">
+          <rect x="50" y="20" width="250" height="52" rx="8"/>
+          <rect x="460" y="20" width="250" height="52" rx="8"/>
+          <rect x="460" y="150" width="250" height="52" rx="8"/>
+          <rect x="50" y="150" width="250" height="52" rx="8"/>
+        </g>
+        <g class="diagram-text" fill="var(--ink)" text-anchor="middle">
+          <text x="175" y="43">system close to its</text><text x="175" y="60">throughput limit</text>
+          <text x="585" y="43">long queue, response</text><text x="585" y="60">times shoot up</text>
+          <text x="585" y="173">clients time out and</text><text x="585" y="190">resend their requests</text>
+          <text x="175" y="173">request rate goes</text><text x="175" y="190">up even further</text>
+        </g>
+        <g stroke="var(--thru)" stroke-width="1.6" fill="none" marker-end="url(#dp-a1)">
+          <line x1="302" y1="46" x2="456" y2="46"/>
+          <line x1="585" y1="74" x2="585" y2="146"/>
+          <line x1="458" y1="176" x2="304" y2="176"/>
+          <line x1="175" y1="148" x2="175" y2="76"/>
+        </g>
+        <text x="380" y="106" text-anchor="middle" class="diagram-text" font-weight="700" fill="var(--thru)">retry storm</text>
+        <text x="380" y="124" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">the loop feeds itself</text>
+        <text x="380" y="230" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">even after the load drops, it can stay stuck here until rebooted or reset = metastable failure</text>
+      </svg>
+    </div>
+    <div class="grid2">
+      <div class="def thru">
+        <b>Retry storm —</b> response times get so long that clients time out
+        and resend their requests, which raises the request rate even
+        further and makes the problem worse.
+      </div>
+      <div class="def thru">
+        <b>Metastable failure —</b> even when the load is reduced again, the
+        system stays in its overloaded state until it's rebooted or
+        otherwise reset. It can cause serious outages in production systems.
+      </div>
+    </div>
+    <p>How to keep retries from overloading a service:</p>
+    <table>
+      <thead><tr><th>Technique</th><th>Who does it</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><b>Exponential backoff</b></td><td>Client</td><td>Increase <em>and randomize</em> the time between successive retries</td></tr>
+        <tr><td><b>Circuit breaker</b> / <b>token bucket</b></td><td>Client</td><td>Temporarily stop sending requests to a service that has recently returned errors or timed out</td></tr>
+        <tr><td><b>Load shedding</b></td><td>Server</td><td>Detect that overload is approaching and proactively reject requests</td></tr>
+        <tr><td><b>Backpressure</b></td><td>Server</td><td>Send back responses asking clients to slow down</td></tr>
+        <tr><td>Queueing / load-balancing algorithm</td><td>The system</td><td>The choice of these algorithms can also make a difference</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Which number matters to whom</h2>
+    <p>
+      <b>Response time</b> is usually what users care about most.
+      <b>Throughput</b> determines the computing resources you need (e.g.
+      how many servers), and therefore the <b>cost</b> of serving a
+      workload. If throughput is likely to grow beyond what the current
+      hardware can handle, capacity has to be expanded.
+    </p>
+    <div class="def thru">
+      <b>Scalable —</b> a system is scalable if its maximum throughput can
+      be significantly increased by adding computing resources.
+    </div>
+    <p class="caption">
+      The rest of this section focuses on response times. The book comes
+      back to throughput and scalability later, in "Scalability".
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Latency vs response time: the book's vocabulary</h2>
+    <p>
+      People often use "latency" and "response time" interchangeably. This
+      book uses them, and a few related terms, in a specific way:
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Timeline of one request: network latency, queueing delay, service time, queueing, network latency, adding up to response time">
+        <defs>
+          <marker id="dp-a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink)"/>
+          </marker>
+          <marker id="dp-a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+        <text x="20" y="54" class="diagram-text" fill="var(--ink)">client</text>
+        <text x="20" y="134" class="diagram-text" fill="var(--ink)">service</text>
+        <line x1="80" y1="50" x2="150" y2="50" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4"/>
+        <line x1="150" y1="50" x2="645" y2="50" stroke="var(--ink)" stroke-width="2"/>
+        <line x1="645" y1="50" x2="735" y2="50" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#dp-a3)"/>
+        <line x1="80" y1="130" x2="250" y2="130" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4"/>
+        <line x1="250" y1="130" x2="545" y2="130" stroke="var(--ink)" stroke-width="2"/>
+        <line x1="545" y1="130" x2="735" y2="130" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4" marker-end="url(#dp-a3)"/>
+        <text x="740" y="34" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">time →</text>
+
+        <text x="150" y="34" text-anchor="middle" class="diagram-small" fill="var(--ink)">make request</text>
+        <text x="645" y="34" text-anchor="middle" class="diagram-small" fill="var(--ink)">receive response</text>
+        <line x1="150" y1="50" x2="246" y2="127" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#dp-a2)"/>
+        <line x1="545" y1="130" x2="641" y2="53" stroke="var(--ink)" stroke-width="2.5" marker-end="url(#dp-a2)"/>
+        <text x="212" y="80" class="diagram-small" fill="var(--ink)">request</text>
+        <text x="583" y="80" text-anchor="end" class="diagram-small" fill="var(--ink)">response</text>
+        <rect x="350" y="118" width="170" height="24" fill="var(--resp-soft)" stroke="var(--resp)" stroke-width="1.2"/>
+        <text x="435" y="135" text-anchor="middle" class="diagram-small" fill="var(--ink)">processing</text>
+
+        <g stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 3">
+          <line x1="150" y1="50" x2="150" y2="222"/>
+          <line x1="645" y1="50" x2="645" y2="222"/>
+          <line x1="250" y1="130" x2="250" y2="178"/>
+          <line x1="350" y1="142" x2="350" y2="178"/>
+          <line x1="520" y1="142" x2="520" y2="178"/>
+          <line x1="545" y1="130" x2="545" y2="178"/>
+        </g>
+        <g stroke="var(--ink)" stroke-width="1.2">
+          <line x1="150" y1="178" x2="645" y2="178"/>
+          <line x1="150" y1="172" x2="150" y2="184"/><line x1="250" y1="172" x2="250" y2="184"/>
+          <line x1="350" y1="172" x2="350" y2="184"/><line x1="520" y1="172" x2="520" y2="184"/>
+          <line x1="545" y1="172" x2="545" y2="184"/><line x1="645" y1="172" x2="645" y2="184"/>
+        </g>
+        <g class="diagram-small" fill="var(--ink)" text-anchor="middle">
+          <text x="200" y="168">network latency</text>
+          <text x="300" y="168">queueing delay</text>
+          <text x="435" y="168">service time</text>
+          <text x="595" y="168">network latency</text>
+          <text x="532" y="198" fill="var(--ink-soft)">queueing</text>
+        </g>
+        <line x1="150" y1="226" x2="645" y2="226" stroke="var(--resp)" stroke-width="2"/>
+        <line x1="150" y1="219" x2="150" y2="233" stroke="var(--resp)" stroke-width="2"/>
+        <line x1="645" y1="219" x2="645" y2="233" stroke="var(--resp)" stroke-width="2"/>
+        <text x="397" y="216" text-anchor="middle" class="diagram-text" font-weight="700" fill="var(--ink)">response time (what the client sees)</text>
+      </svg>
+      <p class="caption">
+        Redrawn from Figure 2-4. Time flows left to right, each node is a
+        horizontal line, and each message is a thick diagonal arrow. The
+        book says this style of diagram comes up a lot later on.
+      </p>
+    </div>
+    <table>
+      <thead><tr><th>Term</th><th>Meaning in this book</th></tr></thead>
+      <tbody>
+        <tr><td><b>Response time</b></td><td>What the client sees. Includes <em>all</em> delays incurred anywhere in the system.</td></tr>
+        <tr><td><b>Service time</b></td><td>The duration for which the service is <em>actively processing</em> the request.</td></tr>
+        <tr><td><b>Queueing delay</b></td><td>Waiting, which can happen at several points. E.g. a received request waits until a CPU is free, or a response packet is buffered because other tasks on the machine are sending lots of data through the outbound network interface.</td></tr>
+        <tr><td><b>Latency</b></td><td>A <b>catchall term for time during which a request is not being actively processed</b>, i.e. it is <em>latent</em>.</td></tr>
+        <tr><td><b>Network latency</b> / network delay</td><td>The time the request and response spend traveling through the network.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Why the same request isn't always the same speed</h2>
+    <p>
+      Response time can <b>vary a lot from one request to the next</b>, even
+      if you keep sending exactly the same request. Lots of things add
+      random delays:
+    </p>
+    <ul>
+      <li>a <b>context switch</b> to a background process</li>
+      <li>a lost network packet and a <b>TCP retransmission</b></li>
+      <li>a <b>garbage collection pause</b></li>
+      <li>a <b>page fault</b> forcing a read from disk</li>
+      <li>even <b>mechanical vibrations</b> in the server rack</li>
+    </ul>
+    <p class="caption">(The book goes deeper on this later, in "Timeouts and Unbounded Delays".)</p>
+    <p>
+      <b>Queueing delays</b> often account for a large part of that
+      variability. A server can only process a small number of things in
+      parallel (limited by its CPU cores, for example), so it takes only a
+      few slow requests to hold up everything behind them:
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Head-of-line blocking: fast requests stuck in a queue behind one slow request">
+        <defs>
+          <marker id="dp-a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+        <text x="40" y="66" class="diagram-small" fill="var(--ink-soft)">arriving</text>
+        <line x1="40" y1="76" x2="120" y2="76" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dp-a4)"/>
+        <g fill="var(--resp-soft)" stroke="var(--resp)" stroke-width="1.2">
+          <rect x="130" y="56" width="70" height="40" rx="5"/>
+          <rect x="215" y="56" width="70" height="40" rx="5"/>
+          <rect x="300" y="56" width="70" height="40" rx="5"/>
+        </g>
+        <g class="diagram-small" fill="var(--ink)" text-anchor="middle">
+          <text x="165" y="80">fast</text><text x="250" y="80">fast</text><text x="335" y="80">fast</text>
+        </g>
+        <line x1="378" y1="76" x2="412" y2="76" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dp-a4)"/>
+        <rect x="420" y="30" width="300" height="92" rx="8" fill="none" stroke="var(--ink)" stroke-width="1.4"/>
+        <text x="432" y="48" class="diagram-small" fill="var(--ink-soft)">server (all cores busy)</text>
+        <rect x="432" y="58" width="276" height="40" rx="5" fill="var(--thru-soft)" stroke="var(--thru)" stroke-width="1.2"/>
+        <text x="570" y="82" text-anchor="middle" class="diagram-text" fill="var(--ink)">one slow request</text>
+        <text x="250" y="122" text-anchor="middle" class="diagram-small" fill="var(--ink)">short service time, but a long response time:</text>
+        <text x="250" y="137" text-anchor="middle" class="diagram-small" fill="var(--ink)">they're waiting for the request ahead of them</text>
+      </svg>
+    </div>
+    <div class="def">
+      <b>Head-of-line blocking —</b> a small number of slow requests holding
+      up the processing of the requests behind them. Even if those later
+      requests have fast service times, the client sees a slow overall
+      response time because of the wait for the earlier request to finish.
+    </div>
+    <div class="def aside">
+      <b>So measure response time on the client side —</b> the queueing
+      delay is <em>not</em> part of the service time. A server timing only
+      its own processing will never see the wait, but the user will.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> Think in distributions, not single numbers</h2>
+    <p>
+      Since response time varies per request, it isn't a single number but
+      a <b>distribution</b> of values you can measure. Most requests are
+      reasonably fast, but occasional <b>outliers</b> take much longer.
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart of 100 request response times with mean, median, p95 and p99 reference lines"><line x1="144" y1="322" x2="756" y2="322" stroke="var(--ink-soft)" stroke-width="1"/><path d="M150,322 V291.1 Q150,289.1 152,289.1 Q154,289.1 154,291.1 V322 Z" fill="var(--bar)"><title>request 1: 137 ms</title></path><path d="M156,322 V281.0 Q156,279.0 158,279.0 Q160,279.0 160,281.0 V322 Z" fill="var(--bar)"><title>request 2: 179 ms</title></path><path d="M162,322 V290.6 Q162,288.6 164,288.6 Q166,288.6 166,290.6 V322 Z" fill="var(--bar)"><title>request 3: 139 ms</title></path><path d="M168,322 V291.8 Q168,289.8 170,289.8 Q172,289.8 172,291.8 V322 Z" fill="var(--bar)"><title>request 4: 134 ms</title></path><path d="M174,322 V298.1 Q174,296.1 176,296.1 Q178,296.1 178,298.1 V322 Z" fill="var(--bar)"><title>request 5: 108 ms</title></path><path d="M180,322 V290.6 Q180,288.6 182,288.6 Q184,288.6 184,290.6 V322 Z" fill="var(--bar)"><title>request 6: 139 ms</title></path><path d="M186,322 V271.0 Q186,269.0 188,269.0 Q190,269.0 190,271.0 V322 Z" fill="var(--bar)"><title>request 7: 221 ms</title></path><path d="M192,322 V282.2 Q192,280.2 194,280.2 Q196,280.2 196,282.2 V322 Z" fill="var(--bar)"><title>request 8: 174 ms</title></path><path d="M198,322 V272.2 Q198,270.2 200,270.2 Q202,270.2 202,272.2 V322 Z" fill="var(--bar)"><title>request 9: 216 ms</title></path><path d="M204,322 V284.6 Q204,282.6 206,282.6 Q208,282.6 208,284.6 V322 Z" fill="var(--bar)"><title>request 10: 164 ms</title></path><path d="M210,322 V282.7 Q210,280.7 212,280.7 Q214,280.7 214,282.7 V322 Z" fill="var(--bar)"><title>request 11: 172 ms</title></path><path d="M216,322 V285.6 Q216,283.6 218,283.6 Q220,283.6 220,285.6 V322 Z" fill="var(--bar)"><title>request 12: 160 ms</title></path><path d="M222,322 V303.8 Q222,301.8 224,301.8 Q226,301.8 226,303.8 V322 Z" fill="var(--bar)"><title>request 13: 84 ms</title></path><path d="M228,322 V275.5 Q228,273.5 230,273.5 Q232,273.5 232,275.5 V322 Z" fill="var(--bar)"><title>request 14: 202 ms</title></path><path d="M234,322 V281.0 Q234,279.0 236,279.0 Q238,279.0 238,281.0 V322 Z" fill="var(--bar)"><title>request 15: 179 ms</title></path><path d="M240,322 V281.0 Q240,279.0 242,279.0 Q244,279.0 244,281.0 V322 Z" fill="var(--bar)"><title>request 16: 179 ms</title></path><path d="M246,322 V304.1 Q246,302.1 248,302.1 Q250,302.1 250,304.1 V322 Z" fill="var(--bar)"><title>request 17: 83 ms</title></path><path d="M252,322 V304.6 Q252,302.6 254,302.6 Q256,302.6 256,304.6 V322 Z" fill="var(--bar)"><title>request 18: 81 ms</title></path><path d="M258,322 V297.6 Q258,295.6 260,295.6 Q262,295.6 262,297.6 V322 Z" fill="var(--bar)"><title>request 19: 110 ms</title></path><path d="M264,322 V293.5 Q264,291.5 266,291.5 Q268,291.5 268,293.5 V322 Z" fill="var(--bar)"><title>request 20: 127 ms</title></path><path d="M270,322 V283.9 Q270,281.9 272,281.9 Q274,281.9 274,283.9 V322 Z" fill="var(--bar)"><title>request 21: 167 ms</title></path><path d="M276,322 V288.5 Q276,286.5 278,286.5 Q280,286.5 280,288.5 V322 Z" fill="var(--bar)"><title>request 22: 148 ms</title></path><path d="M282,322 V280.8 Q282,278.8 284,278.8 Q286,278.8 286,280.8 V322 Z" fill="var(--bar)"><title>request 23: 180 ms</title></path><path d="M288,322 V175.2 Q288,173.2 290,173.2 Q292,173.2 292,175.2 V322 Z" fill="var(--bar-hot)"><title>request 24: 620 ms</title></path><path d="M294,322 V283.9 Q294,281.9 296,281.9 Q298,281.9 298,283.9 V322 Z" fill="var(--bar)"><title>request 25: 167 ms</title></path><path d="M300,322 V282.7 Q300,280.7 302,280.7 Q304,280.7 304,282.7 V322 Z" fill="var(--bar)"><title>request 26: 172 ms</title></path><path d="M306,322 V295.4 Q306,293.4 308,293.4 Q310,293.4 310,295.4 V322 Z" fill="var(--bar)"><title>request 27: 119 ms</title></path><path d="M312,322 V258.2 Q312,256.2 314,256.2 Q316,256.2 316,258.2 V322 Z" fill="var(--bar)"><title>request 28: 274 ms</title></path><path d="M318,322 V280.3 Q318,278.3 320,278.3 Q322,278.3 322,280.3 V322 Z" fill="var(--bar)"><title>request 29: 182 ms</title></path><path d="M324,322 V269.3 Q324,267.3 326,267.3 Q328,267.3 328,269.3 V322 Z" fill="var(--bar)"><title>request 30: 228 ms</title></path><path d="M330,322 V295.0 Q330,293.0 332,293.0 Q334,293.0 334,295.0 V322 Z" fill="var(--bar)"><title>request 31: 121 ms</title></path><path d="M336,322 V296.2 Q336,294.2 338,294.2 Q340,294.2 340,296.2 V322 Z" fill="var(--bar)"><title>request 32: 116 ms</title></path><path d="M342,322 V292.1 Q342,290.1 344,290.1 Q346,290.1 346,292.1 V322 Z" fill="var(--bar)"><title>request 33: 133 ms</title></path><path d="M348,322 V289.2 Q348,287.2 350,287.2 Q352,287.2 352,289.2 V322 Z" fill="var(--bar)"><title>request 34: 145 ms</title></path><path d="M354,322 V279.1 Q354,277.1 356,277.1 Q358,277.1 358,279.1 V322 Z" fill="var(--bar)"><title>request 35: 187 ms</title></path><path d="M360,322 V284.6 Q360,282.6 362,282.6 Q364,282.6 364,284.6 V322 Z" fill="var(--bar)"><title>request 36: 164 ms</title></path><path d="M366,322 V293.3 Q366,291.3 368,291.3 Q370,291.3 370,293.3 V322 Z" fill="var(--bar)"><title>request 37: 128 ms</title></path><path d="M372,322 V298.3 Q372,296.3 374,296.3 Q376,296.3 376,298.3 V322 Z" fill="var(--bar)"><title>request 38: 107 ms</title></path><path d="M378,322 V294.0 Q378,292.0 380,292.0 Q382,292.0 382,294.0 V322 Z" fill="var(--bar)"><title>request 39: 125 ms</title></path><path d="M384,322 V268.8 Q384,266.8 386,266.8 Q388,266.8 388,268.8 V322 Z" fill="var(--bar)"><title>request 40: 230 ms</title></path><path d="M390,322 V296.9 Q390,294.9 392,294.9 Q394,294.9 394,296.9 V322 Z" fill="var(--bar)"><title>request 41: 113 ms</title></path><path d="M396,322 V284.9 Q396,282.9 398,282.9 Q400,282.9 400,284.9 V322 Z" fill="var(--bar)"><title>request 42: 163 ms</title></path><path d="M402,322 V282.2 Q402,280.2 404,280.2 Q406,280.2 406,282.2 V322 Z" fill="var(--bar)"><title>request 43: 174 ms</title></path><path d="M408,322 V302.6 Q408,300.6 410,300.6 Q412,300.6 412,302.6 V322 Z" fill="var(--bar)"><title>request 44: 89 ms</title></path><path d="M414,322 V287.3 Q414,285.3 416,285.3 Q418,285.3 418,287.3 V322 Z" fill="var(--bar)"><title>request 45: 153 ms</title></path><path d="M420,322 V267.1 Q420,265.1 422,265.1 Q424,265.1 424,267.1 V322 Z" fill="var(--bar)"><title>request 46: 237 ms</title></path><path d="M426,322 V306.2 Q426,304.2 428,304.2 Q430,304.2 430,306.2 V322 Z" fill="var(--bar)"><title>request 47: 74 ms</title></path><path d="M432,322 V291.8 Q432,289.8 434,289.8 Q436,289.8 436,291.8 V322 Z" fill="var(--bar)"><title>request 48: 134 ms</title></path><path d="M438,322 V289.2 Q438,287.2 440,287.2 Q442,287.2 442,289.2 V322 Z" fill="var(--bar)"><title>request 49: 145 ms</title></path><path d="M444,322 V48.0 Q444,46.0 446,46.0 Q448,46.0 448,48.0 V322 Z" fill="var(--bar-hot)"><title>request 50: 1150 ms</title></path><path d="M450,322 V281.0 Q450,279.0 452,279.0 Q454,279.0 454,281.0 V322 Z" fill="var(--bar)"><title>request 51: 179 ms</title></path><path d="M456,322 V288.7 Q456,286.7 458,286.7 Q460,286.7 460,288.7 V322 Z" fill="var(--bar)"><title>request 52: 147 ms</title></path><path d="M462,322 V302.4 Q462,300.4 464,300.4 Q466,300.4 466,302.4 V322 Z" fill="var(--bar)"><title>request 53: 90 ms</title></path><path d="M468,322 V276.0 Q468,274.0 470,274.0 Q472,274.0 472,276.0 V322 Z" fill="var(--bar)"><title>request 54: 200 ms</title></path><path d="M474,322 V278.4 Q474,276.4 476,276.4 Q478,276.4 478,278.4 V322 Z" fill="var(--bar)"><title>request 55: 190 ms</title></path><path d="M480,322 V273.8 Q480,271.8 482,271.8 Q484,271.8 484,273.8 V322 Z" fill="var(--bar)"><title>request 56: 209 ms</title></path><path d="M486,322 V264.5 Q486,262.5 488,262.5 Q490,262.5 490,264.5 V322 Z" fill="var(--bar)"><title>request 57: 248 ms</title></path><path d="M492,322 V283.2 Q492,281.2 494,281.2 Q496,281.2 496,283.2 V322 Z" fill="var(--bar)"><title>request 58: 170 ms</title></path><path d="M498,322 V286.6 Q498,284.6 500,284.6 Q502,284.6 502,286.6 V322 Z" fill="var(--bar)"><title>request 59: 156 ms</title></path><path d="M504,322 V301.2 Q504,299.2 506,299.2 Q508,299.2 508,301.2 V322 Z" fill="var(--bar)"><title>request 60: 95 ms</title></path><path d="M510,322 V279.4 Q510,277.4 512,277.4 Q514,277.4 514,279.4 V322 Z" fill="var(--bar)"><title>request 61: 186 ms</title></path><path d="M516,322 V295.0 Q516,293.0 518,293.0 Q520,293.0 520,295.0 V322 Z" fill="var(--bar)"><title>request 62: 121 ms</title></path><path d="M522,322 V293.3 Q522,291.3 524,291.3 Q526,291.3 526,293.3 V322 Z" fill="var(--bar)"><title>request 63: 128 ms</title></path><path d="M528,322 V301.0 Q528,299.0 530,299.0 Q532,299.0 532,301.0 V322 Z" fill="var(--bar)"><title>request 64: 96 ms</title></path><path d="M534,322 V298.3 Q534,296.3 536,296.3 Q538,296.3 538,298.3 V322 Z" fill="var(--bar)"><title>request 65: 107 ms</title></path><path d="M540,322 V294.0 Q540,292.0 542,292.0 Q544,292.0 544,294.0 V322 Z" fill="var(--bar)"><title>request 66: 125 ms</title></path><path d="M546,322 V267.4 Q546,265.4 548,265.4 Q550,265.4 550,267.4 V322 Z" fill="var(--bar)"><title>request 67: 236 ms</title></path><path d="M552,322 V306.2 Q552,304.2 554,304.2 Q556,304.2 556,306.2 V322 Z" fill="var(--bar)"><title>request 68: 74 ms</title></path><path d="M558,322 V302.4 Q558,300.4 560,300.4 Q562,300.4 562,302.4 V322 Z" fill="var(--bar)"><title>request 69: 90 ms</title></path><path d="M564,322 V284.9 Q564,282.9 566,282.9 Q568,282.9 568,284.9 V322 Z" fill="var(--bar)"><title>request 70: 163 ms</title></path><path d="M570,322 V264.2 Q570,262.2 572,262.2 Q574,262.2 574,264.2 V322 Z" fill="var(--bar)"><title>request 71: 249 ms</title></path><path d="M576,322 V279.8 Q576,277.8 578,277.8 Q580,277.8 580,279.8 V322 Z" fill="var(--bar)"><title>request 72: 184 ms</title></path><path d="M582,322 V305.5 Q582,303.5 584,303.5 Q586,303.5 586,305.5 V322 Z" fill="var(--bar)"><title>request 73: 77 ms</title></path><path d="M588,322 V309.1 Q588,307.1 590,307.1 Q592,307.1 592,309.1 V322 Z" fill="var(--bar)"><title>request 74: 62 ms</title></path><path d="M594,322 V283.2 Q594,281.2 596,281.2 Q598,281.2 598,283.2 V322 Z" fill="var(--bar)"><title>request 75: 170 ms</title></path><path d="M600,322 V296.2 Q600,294.2 602,294.2 Q604,294.2 604,296.2 V322 Z" fill="var(--bar)"><title>request 76: 116 ms</title></path><path d="M606,322 V299.8 Q606,297.8 608,297.8 Q610,297.8 610,299.8 V322 Z" fill="var(--bar)"><title>request 77: 101 ms</title></path><path d="M612,322 V189.6 Q612,187.6 614,187.6 Q616,187.6 616,189.6 V322 Z" fill="var(--bar-hot)"><title>request 78: 560 ms</title></path><path d="M618,322 V271.0 Q618,269.0 620,269.0 Q622,269.0 622,271.0 V322 Z" fill="var(--bar)"><title>request 79: 221 ms</title></path><path d="M624,322 V286.1 Q624,284.1 626,284.1 Q628,284.1 628,286.1 V322 Z" fill="var(--bar)"><title>request 80: 158 ms</title></path><path d="M630,322 V284.9 Q630,282.9 632,282.9 Q634,282.9 634,284.9 V322 Z" fill="var(--bar)"><title>request 81: 163 ms</title></path><path d="M636,322 V282.0 Q636,280.0 638,280.0 Q640,280.0 640,282.0 V322 Z" fill="var(--bar)"><title>request 82: 175 ms</title></path><path d="M642,322 V261.1 Q642,259.1 644,259.1 Q646,259.1 646,261.1 V322 Z" fill="var(--bar)"><title>request 83: 262 ms</title></path><path d="M648,322 V279.4 Q648,277.4 650,277.4 Q652,277.4 652,279.4 V322 Z" fill="var(--bar)"><title>request 84: 186 ms</title></path><path d="M654,322 V280.8 Q654,278.8 656,278.8 Q658,278.8 658,280.8 V322 Z" fill="var(--bar)"><title>request 85: 180 ms</title></path><path d="M660,322 V280.3 Q660,278.3 662,278.3 Q664,278.3 664,280.3 V322 Z" fill="var(--bar)"><title>request 86: 182 ms</title></path><path d="M666,322 V303.1 Q666,301.1 668,301.1 Q670,301.1 670,303.1 V322 Z" fill="var(--bar)"><title>request 87: 87 ms</title></path><path d="M672,322 V267.6 Q672,265.6 674,265.6 Q676,265.6 676,267.6 V322 Z" fill="var(--bar)"><title>request 88: 235 ms</title></path><path d="M678,322 V156.0 Q678,154.0 680,154.0 Q682,154.0 682,156.0 V322 Z" fill="var(--bar-hot)"><title>request 89: 700 ms</title></path><path d="M684,322 V280.6 Q684,278.6 686,278.6 Q688,278.6 688,280.6 V322 Z" fill="var(--bar)"><title>request 90: 181 ms</title></path><path d="M690,322 V306.0 Q690,304.0 692,304.0 Q694,304.0 694,306.0 V322 Z" fill="var(--bar)"><title>request 91: 75 ms</title></path><path d="M696,322 V295.2 Q696,293.2 698,293.2 Q700,293.2 700,295.2 V322 Z" fill="var(--bar)"><title>request 92: 120 ms</title></path><path d="M702,322 V275.8 Q702,273.8 704,273.8 Q706,273.8 706,275.8 V322 Z" fill="var(--bar)"><title>request 93: 201 ms</title></path><path d="M708,322 V304.8 Q708,302.8 710,302.8 Q712,302.8 712,304.8 V322 Z" fill="var(--bar)"><title>request 94: 80 ms</title></path><path d="M714,322 V290.2 Q714,288.2 716,288.2 Q718,288.2 718,290.2 V322 Z" fill="var(--bar)"><title>request 95: 141 ms</title></path><path d="M720,322 V182.4 Q720,180.4 722,180.4 Q724,180.4 724,182.4 V322 Z" fill="var(--bar-hot)"><title>request 96: 590 ms</title></path><path d="M726,322 V301.2 Q726,299.2 728,299.2 Q730,299.2 730,301.2 V322 Z" fill="var(--bar)"><title>request 97: 95 ms</title></path><path d="M732,322 V260.6 Q732,258.6 734,258.6 Q736,258.6 736,260.6 V322 Z" fill="var(--bar)"><title>request 98: 264 ms</title></path><path d="M738,322 V280.3 Q738,278.3 740,278.3 Q742,278.3 742,280.3 V322 Z" fill="var(--bar)"><title>request 99: 182 ms</title></path><path d="M744,322 V289.9 Q744,287.9 746,287.9 Q748,287.9 748,289.9 V322 Z" fill="var(--bar)"><title>request 100: 142 ms</title></path><line x1="144" y1="154.0" x2="750" y2="154.0" stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="138" y="158.0" text-anchor="end" class="diagram-small" fill="var(--ink)">p99 = 700 ms</text><line x1="144" y1="256.2" x2="750" y2="256.2" stroke="var(--ink-soft)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="138" y="260.2" text-anchor="end" class="diagram-small" fill="var(--ink)">p95 = 274 ms</text><line x1="144" y1="278.1" x2="750" y2="278.1" stroke="var(--thru)" stroke-width="1.5" stroke-dasharray="0"/><text x="138" y="275.1" text-anchor="end" class="diagram-small" fill="var(--ink)">mean = 183 ms</text><line x1="144" y1="282.9" x2="750" y2="282.9" stroke="var(--resp)" stroke-width="1.5" stroke-dasharray="2 3"/><text x="138" y="293.9" text-anchor="end" class="diagram-small" fill="var(--ink)">median (p50) = 163 ms</text><text x="750" y="344" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">100 requests, in arrival order</text><text x="150" y="20" class="diagram-small" fill="var(--ink-soft)">response time (one bar per request)</text></svg>
+      <p class="caption">
+        Redrawn in the style of Figure 2-5, using a made-up sample of 100
+        requests (the book's figure is also illustrative). The reference
+        lines are computed from these bars. The 5 blue bars above p95 are
+        the slowest 5%. Hover any bar to see its time.
+      </p>
+    </div>
+    <div class="def">
+      <b>Jitter —</b> variation in network delay.
+    </div>
+    <p>
+      The usual summary number is the <b>average</b> (technically the
+      <em>arithmetic mean</em>: sum all the response times and divide by the
+      number of requests). The mean is useful for <b>estimating throughput
+      limits</b>. But it's <b>not a good metric for your "typical" response
+      time</b>, because it doesn't tell you how many users actually
+      experienced that delay. In the sample above, a few slow outliers pull
+      the mean (183 ms) above the median (163 ms), so most requests were
+      actually faster than "average".
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">08</span> Percentiles</h2>
+    <div class="def">
+      <b>Percentiles —</b> sort the response times from fastest to slowest.
+      The <b>median</b> is the halfway point: if the median is 200 ms, half
+      your requests return in under 200 ms and half take longer. That makes
+      it a good metric for <b>how long users typically wait</b>. The median
+      is also called the <b>50th percentile</b>, or <b>p50</b>.
+    </div>
+    <p>
+      To see how bad the outliers are, look at higher percentiles. If the
+      95th percentile is 1.5 seconds, then <b>95 out of 100 requests take
+      less than 1.5 s, and 5 out of 100 take 1.5 s or more</b>.
+    </p>
+    <table>
+      <thead><tr><th>Percentile</th><th>Short name</th><th>1 in N requests is this slow or slower</th><th>In the sample above</th></tr></thead>
+      <tbody>
+        <tr><td>50th (median)</td><td>p50</td><td>1 in 2</td><td>163 ms</td></tr>
+        <tr><td>95th</td><td>p95</td><td>1 in 20</td><td>274 ms</td></tr>
+        <tr><td>99th</td><td>p99</td><td>1 in 100</td><td>700 ms</td></tr>
+        <tr><td>99.9th</td><td>p999</td><td>1 in 1,000</td><td>(needs a bigger sample than 100)</td></tr>
+      </tbody>
+    </table>
+    <div class="def">
+      <b>Tail latencies —</b> the high response-time percentiles. They
+      matter because they directly affect users' experience of the service.
+    </div>
+    <div class="def aside">
+      <b>Amazon's example —</b> Amazon describes response-time requirements
+      for internal services in terms of the <b>99.9th percentile</b>, even
+      though that affects only 1 in 1,000 requests. The customers with the
+      slowest requests are often the ones with the most data on their
+      accounts because they've made many purchases. In other words, they're
+      the <b>most valuable customers</b>, so it's important the site is fast
+      for them.
+      <br><br>
+      But optimizing the <b>99.99th percentile</b> (the slowest 1 in 10,000)
+      was judged too expensive and not beneficial enough for Amazon's
+      purposes. Very high percentiles are hard to reduce because random
+      events outside your control easily affect them, and the benefits
+      diminish.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">09</span> The user impact of response times</h2>
+    <p>
+      It seems obvious that a fast service is better for users than a slow
+      one, but reliable data quantifying how much latency changes user
+      behavior is <b>surprisingly hard to find</b>, and some often-cited
+      statistics are unreliable:
+    </p>
+    <table>
+      <thead><tr><th>Study</th><th>Finding</th><th>What the book makes of it</th></tr></thead>
+      <tbody>
+        <tr><td>Google, 2006</td><td>Search results slowing from 400 ms to 900 ms was associated with a 20% drop in traffic and revenue</td><td>The book's example of an often-cited but unreliable statistic</td></tr>
+        <tr><td>Google, 2009</td><td>A 400 ms latency increase led to only 0.6% fewer searches per day</td><td>A far smaller effect than the 2006 figure</td></tr>
+        <tr><td>Bing, 2009</td><td>A 2-second increase in load time cut ad revenue by 4.3%</td><td>-</td></tr>
+        <tr><td>Akamai (more recent)</td><td>100 ms slower response cut e-commerce conversion by up to 7%</td><td>The same study also shows very <em>fast</em> pages converting worse, because the fastest pages are often useless ones (e.g. 404 errors). It doesn't separate page content from load time, so the results are probably not meaningful.</td></tr>
+        <tr><td>Yahoo (the following year)</td><td>20%-30% more clicks on fast searches when the fast/slow gap is 1.25 s or more</td><td>Controlled for the quality of the search results, which the Akamai study didn't do</td></tr>
+      </tbody>
+    </table>
+    <p class="caption">(Newer data from Google and Bing doesn't appear to be publicly available, per the book.)</p>
+  </section>
+
+</div>
+</body>
+</html>

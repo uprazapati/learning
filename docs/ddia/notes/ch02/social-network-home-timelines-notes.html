@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Network Home Timelines — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#EEF0F3;
+    --card:#FAFBFC;
+    --ink:#1E2328;
+    --ink-soft:#5B6470;
+    --rule:#CBD1D8;
+    --pull:#3D5A80;
+    --pull-soft:#DDE5EF;
+    --push:#B4532A;
+    --push-soft:#F3DED3;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+    --code-bg:#F2F4F7;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.pull i{background:var(--pull);}
+  .swatch.push i{background:var(--push);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--pull);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.push{border-left-color:var(--push);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--pull);}
+  .def.push b{color:var(--push);}
+  .def.aside b{color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--pull-soft);color:var(--pull);}
+  thead th.push{background:var(--push-soft);color:var(--push);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  pre, code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  pre{background:var(--code-bg);border:1px solid var(--rule);border-radius:8px;padding:14px 18px;
+      overflow-x:auto;font-size:.9rem;line-height:1.55;max-width:72ch;margin:14px 0;}
+  code{background:var(--code-bg);border-radius:4px;padding:.05em .3em;font-size:.88em;}
+  pre code{background:none;padding:0;font-size:inherit;}
+  .kw{color:var(--pull);font-weight:600;}
+  .lit{color:var(--push);}
+
+  /* back-of-the-envelope arithmetic, one quantity per chip */
+  .calc{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:16px 0;max-width:76ch;}
+  .calc .q{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:6px 12px;font-size:.9rem;color:var(--ink-soft);}
+  .calc .q b{display:block;font-size:1.15rem;color:var(--pull);}
+  .calc .q.result{border-color:var(--pull);background:var(--pull-soft);}
+  .calc .op{color:var(--ink-soft);font-size:1.2rem;}
+  .calc.push .q b{color:var(--push);}
+  .calc.push .q.result{border-color:var(--push);background:var(--push-soft);}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .diagram-small{font-size:11px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — scalability</p>
+  <h1>Social Network Home Timelines</h1>
+  <p class="lead">
+    A toy version of X (formerly Twitter), used to show how a perfectly
+    reasonable SQL query stops working at scale — and how moving the work
+    from read time to write time fixes it. From DDIA, Chapter 2
+    ("Case Study: Social Network Home Timelines").
+  </p>
+
+  <div class="legend">
+    <span class="swatch pull"><i></i> reading / work done at query time (pull)</span>
+    <span class="swatch push"><i></i> writing / work done when someone posts (push)</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> The setup — a toy X/Twitter</h2>
+    <p>
+      Users post messages and follow other users. The book says up front
+      this is a huge simplification of how such a service really works,
+      but it's enough to show the problems that show up in large-scale
+      systems. The numbers it assumes:
+    </p>
+    <table>
+      <thead><tr><th>Assumption</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr><td>Posts per day</td><td>500 million, which is <b>~5,800 posts/second</b> on average</td></tr>
+        <tr><td>Peak post rate</td><td>Spikes as high as <b>150,000 posts/second</b></td></tr>
+        <tr><td>Average user</td><td>Follows <b>200</b> people and has <b>200</b> followers</td></tr>
+        <tr><td>The catch</td><td>Very wide range: most people have only a handful of followers, while a few celebrities (e.g. Barack Obama) have <b>over 100 million</b></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Three tables: users, posts, follows</h2>
+    <p>
+      Everything lives in a relational database: one table for users, one
+      for posts, and one for the follow relationships between users.
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 230" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="snt-a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+
+        <text x="20" y="44" class="diagram-text" fill="var(--pull)">current_user = 17055506</text>
+
+        <!-- follows -->
+        <rect x="20" y="60" width="240" height="30" fill="var(--pull-soft)" stroke="var(--ink)" stroke-width="1.2"/>
+        <rect x="20" y="90" width="240" height="30" fill="var(--card)" stroke="var(--ink)" stroke-width="1.2"/>
+        <line x1="150" y1="60" x2="150" y2="120" stroke="var(--ink)" stroke-width="1.2"/>
+        <text x="85" y="80" text-anchor="middle" class="diagram-text" fill="var(--ink)">follower_id</text>
+        <text x="205" y="80" text-anchor="middle" class="diagram-text" fill="var(--ink)">followee_id</text>
+        <text x="85" y="110" text-anchor="middle" class="diagram-text" fill="var(--pull)">17055506</text>
+        <text x="205" y="110" text-anchor="middle" class="diagram-text" fill="var(--ink)">12</text>
+        <text x="20" y="140" class="diagram-text" font-style="italic" fill="var(--ink-soft)">follows</text>
+
+        <!-- posts -->
+        <text x="300" y="22" class="diagram-text" font-style="italic" fill="var(--ink-soft)">posts</text>
+        <rect x="300" y="30" width="430" height="30" fill="var(--pull-soft)" stroke="var(--ink)" stroke-width="1.2"/>
+        <rect x="300" y="60" width="430" height="30" fill="var(--card)" stroke="var(--ink)" stroke-width="1.2"/>
+        <line x1="344" y1="30" x2="344" y2="90" stroke="var(--ink)" stroke-width="1.2"/>
+        <line x1="430" y1="30" x2="430" y2="90" stroke="var(--ink)" stroke-width="1.2"/>
+        <line x1="620" y1="30" x2="620" y2="90" stroke="var(--ink)" stroke-width="1.2"/>
+        <text x="322" y="50" text-anchor="middle" class="diagram-text" fill="var(--ink)">id</text>
+        <text x="387" y="50" text-anchor="middle" class="diagram-text" fill="var(--ink)">sender_id</text>
+        <text x="525" y="50" text-anchor="middle" class="diagram-text" fill="var(--ink)">text</text>
+        <text x="675" y="50" text-anchor="middle" class="diagram-text" fill="var(--ink)">timestamp</text>
+        <text x="322" y="80" text-anchor="middle" class="diagram-text" fill="var(--ink)">20</text>
+        <text x="387" y="80" text-anchor="middle" class="diagram-text" fill="var(--ink)">12</text>
+        <text x="525" y="80" text-anchor="middle" class="diagram-text" fill="var(--ink)">just setting up my twttr</text>
+        <text x="675" y="80" text-anchor="middle" class="diagram-text" fill="var(--ink)">1142974214</text>
+
+        <!-- users -->
+        <text x="420" y="142" class="diagram-text" font-style="italic" fill="var(--ink-soft)">users</text>
+        <rect x="420" y="150" width="310" height="30" fill="var(--pull-soft)" stroke="var(--ink)" stroke-width="1.2"/>
+        <rect x="420" y="180" width="310" height="30" fill="var(--card)" stroke="var(--ink)" stroke-width="1.2"/>
+        <line x1="464" y1="150" x2="464" y2="210" stroke="var(--ink)" stroke-width="1.2"/>
+        <line x1="600" y1="150" x2="600" y2="210" stroke="var(--ink)" stroke-width="1.2"/>
+        <text x="442" y="170" text-anchor="middle" class="diagram-text" fill="var(--ink)">id</text>
+        <text x="532" y="170" text-anchor="middle" class="diagram-text" fill="var(--ink)">screen_name</text>
+        <text x="665" y="170" text-anchor="middle" class="diagram-text" fill="var(--ink)">profile_image</text>
+        <text x="442" y="200" text-anchor="middle" class="diagram-text" fill="var(--ink)">12</text>
+        <text x="532" y="200" text-anchor="middle" class="diagram-text" fill="var(--ink)">jack</text>
+        <text x="665" y="200" text-anchor="middle" class="diagram-text" fill="var(--ink)">1234567.jpg</text>
+
+        <!-- the two joins -->
+        <circle cx="222" cy="105" r="3" fill="var(--ink-soft)"/>
+        <path d="M222,105 C280,150 370,135 385,94" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#snt-a1)"/>
+        <circle cx="402" cy="80" r="3" fill="var(--ink-soft)"/>
+        <path d="M402,80 C412,130 392,190 416,195" fill="none" stroke="var(--ink-soft)" stroke-width="1.3" marker-end="url(#snt-a1)"/>
+      </svg>
+      <p class="caption">
+        Redrawn from Figure 2-1. <code>follows.followee_id</code> points at
+        <code>posts.sender_id</code>, which points at <code>users.id</code>.
+        Those are exactly the two JOINs in the query below.
+      </p>
+    </div>
+    <div class="def aside">
+      <b>Easter egg (beyond the book) —</b> the sample row is real.
+      "just setting up my twttr" was the very first tweet, posted by
+      Jack Dorsey, whose account (<code>jack</code>) was user id 12. The
+      timestamp <code>1142974214</code> decodes to 21 March 2006, 20:50 UTC.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> The obvious way: run a query on every read</h2>
+    <p>
+      The main read operation is the <b>home timeline</b>: recent posts by
+      the people a user follows. (Ads, suggested posts from people you
+      don't follow, and so on are ignored for simplicity.) Straight SQL:
+    </p>
+<pre><code><span class="kw">SELECT</span> posts.*, users.* <span class="kw">FROM</span> posts
+  <span class="kw">JOIN</span> follows <span class="kw">ON</span> posts.sender_id = follows.followee_id
+  <span class="kw">JOIN</span> users   <span class="kw">ON</span> posts.sender_id = users.id
+  <span class="kw">WHERE</span> follows.follower_id = current_user
+  <span class="kw">ORDER BY</span> posts.timestamp <span class="kw">DESC</span>
+  <span class="kw">LIMIT</span> <span class="lit">1000</span></code></pre>
+    <p>What the database actually has to do to answer it:</p>
+    <ul>
+      <li>Use <code>follows</code> to find everybody <code>current_user</code> is following,</li>
+      <li>look up recent posts by each of those users,</li>
+      <li>sort them all by timestamp and keep the most recent 1,000.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Why that falls over: polling</h2>
+    <p>
+      Posts are supposed to be timely, so the requirement is that
+      <b>followers see a new post within five seconds</b>. The simplest way
+      to get that is for each client to re-run the query every five seconds
+      while the user is online. That's <b>polling</b>. With 10 million users
+      online at once:
+    </p>
+    <div class="calc">
+      <span class="q"><b>10M</b> users online</span>
+      <span class="op">÷</span>
+      <span class="q"><b>5 s</b> poll interval</span>
+      <span class="op">=</span>
+      <span class="q result"><b>2M</b> timeline queries/s</span>
+      <span class="op">×</span>
+      <span class="q"><b>200</b> followed accounts each</span>
+      <span class="op">=</span>
+      <span class="q result"><b>400M</b> post lookups/s</span>
+    </div>
+    <p>
+      Each query has to fetch the recent posts of all 200 followed accounts
+      and merge those lists, so 2 million queries a second becomes 400
+      million lookups a second. Even polling less often, it's a lot. And
+      <b>that's the average case</b>: some users follow tens of thousands of
+      accounts, and for them this query is very expensive and hard to make
+      fast.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Flip it: do the work when someone posts</h2>
+    <p>Two changes:</p>
+    <ul>
+      <li><b>Push instead of poll.</b> The server actively pushes new posts to any followers who are currently online.</li>
+      <li><b>Precompute the answer.</b> A request for a home timeline gets served from a cache instead of running the query.</li>
+    </ul>
+    <p>
+      Concretely: keep a data structure <b>per user</b> holding their home
+      timeline (recent posts by the people they follow). Whenever someone
+      posts, look up all their followers and insert the post into each
+      follower's home timeline, <b>like delivering a letter to a mailbox</b>.
+      When a user logs in, just hand them their precomputed timeline. For
+      new-post notifications, the client simply subscribes to the stream of
+      posts being added to its own timeline.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Fan-out</h2>
+    <p>
+      The downside: every post now costs more work, because home timelines
+      are <b>derived data</b> that has to be kept up to date.
+    </p>
+    <div class="def push">
+      <b>Fan-out —</b> when one initial request results in several
+      downstream requests being carried out, the <em>fan-out</em> is the
+      factor by which the number of requests increases. Here, one post by
+      a user with 200 followers means 200 timeline writes, so the fan-out
+      is 200.
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 760 245" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="snt-a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--push)"/>
+          </marker>
+          <marker id="snt-a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--pull)"/>
+          </marker>
+        </defs>
+
+        <!-- poster -->
+        <rect x="20" y="110" width="100" height="40" rx="6" fill="none" stroke="var(--push)" stroke-width="1.6"/>
+        <text x="70" y="135" text-anchor="middle" class="diagram-text" fill="var(--push)">user posts</text>
+        <line x1="122" y1="130" x2="146" y2="130" stroke="var(--push)" stroke-width="1.3" marker-end="url(#snt-a2)"/>
+
+        <!-- all posts, newest on the left -->
+        <text x="150" y="102" class="diagram-text" font-style="italic" fill="var(--ink-soft)">all posts (newest first)</text>
+        <g stroke="var(--ink)" stroke-width="1.1" fill="var(--card)">
+          <rect x="150" y="110" width="30" height="40"/><rect x="180" y="110" width="30" height="40"/>
+          <rect x="210" y="110" width="30" height="40"/><rect x="240" y="110" width="30" height="40"/>
+          <rect x="270" y="110" width="30" height="40"/><rect x="300" y="110" width="30" height="40"/>
+          <rect x="330" y="110" width="30" height="40"/><rect x="360" y="110" width="30" height="40"/>
+        </g>
+        <g class="diagram-text" fill="var(--ink)" text-anchor="middle">
+          <text x="165" y="135">T8</text><text x="195" y="135">T7</text><text x="225" y="135">T6</text><text x="255" y="135">T5</text>
+          <text x="285" y="135">T4</text><text x="315" y="135">T3</text><text x="345" y="135">T2</text><text x="375" y="135">T1</text>
+        </g>
+        <text x="270" y="176" text-anchor="middle" class="diagram-small" fill="var(--push)">fan-out: each new post is</text>
+        <text x="270" y="192" text-anchor="middle" class="diagram-small" fill="var(--push)">written into every follower's timeline</text>
+
+        <!-- fan-out lines -->
+        <line x1="392" y1="130" x2="476" y2="52" stroke="var(--push)" stroke-width="1.3" marker-end="url(#snt-a2)"/>
+        <line x1="392" y1="130" x2="506" y2="130" stroke="var(--push)" stroke-width="1.3" marker-end="url(#snt-a2)"/>
+        <line x1="392" y1="130" x2="446" y2="208" stroke="var(--push)" stroke-width="1.3" marker-end="url(#snt-a2)"/>
+
+        <!-- follower timelines (materialized) -->
+        <text x="600" y="24" text-anchor="end" class="diagram-small" font-style="italic" fill="var(--ink-soft)">follower 1's timeline</text>
+        <text x="600" y="104" text-anchor="end" class="diagram-small" font-style="italic" fill="var(--ink-soft)">follower 2's timeline</text>
+        <text x="600" y="184" text-anchor="end" class="diagram-small" font-style="italic" fill="var(--ink-soft)">follower 3's timeline</text>
+        <g stroke="var(--push)" stroke-width="1.1" fill="var(--push-soft)">
+          <rect x="480" y="30" width="30" height="40"/><rect x="510" y="30" width="30" height="40"/>
+          <rect x="540" y="30" width="30" height="40"/><rect x="570" y="30" width="30" height="40"/>
+          <rect x="510" y="110" width="30" height="40"/><rect x="540" y="110" width="30" height="40"/>
+          <rect x="570" y="110" width="30" height="40"/>
+          <rect x="450" y="190" width="30" height="40"/><rect x="480" y="190" width="30" height="40"/>
+          <rect x="510" y="190" width="30" height="40"/><rect x="540" y="190" width="30" height="40"/>
+          <rect x="570" y="190" width="30" height="40"/>
+        </g>
+        <g class="diagram-text" fill="var(--ink)" text-anchor="middle">
+          <text x="495" y="55">T7</text><text x="525" y="55">T5</text><text x="555" y="55">T3</text><text x="585" y="55">T1</text>
+          <text x="525" y="135">T8</text><text x="555" y="135">T6</text><text x="585" y="135">T5</text>
+          <text x="465" y="215">T8</text><text x="495" y="215">T7</text><text x="525" y="215">T5</text><text x="555" y="215">T4</text><text x="585" y="215">T3</text>
+        </g>
+
+        <!-- cheap reads -->
+        <line x1="672" y1="50" x2="604" y2="50" stroke="var(--pull)" stroke-width="1.3" marker-end="url(#snt-a3)"/>
+        <line x1="672" y1="130" x2="604" y2="130" stroke="var(--pull)" stroke-width="1.3" marker-end="url(#snt-a3)"/>
+        <line x1="672" y1="210" x2="604" y2="210" stroke="var(--pull)" stroke-width="1.3" marker-end="url(#snt-a3)"/>
+        <text x="638" y="44" text-anchor="middle" class="diagram-small" fill="var(--pull)">read</text>
+        <text x="638" y="124" text-anchor="middle" class="diagram-small" fill="var(--pull)">read</text>
+        <text x="638" y="204" text-anchor="middle" class="diagram-small" fill="var(--pull)">read</text>
+        <text x="680" y="54" class="diagram-text" fill="var(--pull)">follower 1</text>
+        <text x="680" y="134" class="diagram-text" fill="var(--pull)">follower 2</text>
+        <text x="680" y="214" class="diagram-text" fill="var(--pull)">follower 3</text>
+      </svg>
+      <p class="caption">
+        Redrawn from Figure 2-2. Each follower only follows some of the
+        posters, so each timeline holds a different subset of the posts.
+        Reading a timeline is now just fetching one precomputed list.
+      </p>
+    </div>
+    <p>The book's numbers for the push approach:</p>
+    <div class="calc push">
+      <span class="q"><b>5,800</b> posts/s</span>
+      <span class="op">×</span>
+      <span class="q"><b>200</b> followers each</span>
+      <span class="op">=</span>
+      <span class="q result"><b>~1.16M</b> timeline writes/s</span>
+    </div>
+    <p>
+      That's a lot, but it's still a big saving over the <b>400 million</b>
+      lookups per second the polling query needed (my arithmetic: about
+      345x less work).
+    </p>
+    <div class="def aside">
+      <b>Spikes don't hurt reads —</b> if the post rate spikes because of a
+      special event, the timeline deliveries don't have to happen
+      immediately. They can be <b>enqueued</b>, and posts simply take a bit
+      longer to show up in followers' timelines for a while. Timelines stay
+      fast to load the whole time, because they're served from the cache.
+      (My arithmetic: at the 150,000 posts/s peak, fan-out would be about
+      30 million writes/s, which is why being able to queue them matters.)
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> Materialization — the general name for this trick</h2>
+    <div class="def">
+      <b>Materialization —</b> precomputing and updating the results of a
+      query. The timeline cache is an example of a <b>materialized
+      view</b> (a concept the book returns to in later chapters).
+    </div>
+    <p>
+      The materialized view speeds up reads, but in return there's more
+      work to do on writes. Side by side:
+    </p>
+    <table>
+      <thead>
+        <tr><th></th><th>Query on read (pull)</th><th class="push">Materialized timeline (push)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>When the work happens</td>
+          <td>Every time someone loads their timeline (every 5 s while polling)</td>
+          <td>Every time someone posts</td>
+        </tr>
+        <tr>
+          <td>Load in this example</td>
+          <td>~400M post lookups/s</td>
+          <td>~1.16M timeline writes/s</td>
+        </tr>
+        <tr>
+          <td>Reading a timeline</td>
+          <td>Join, sort, and merge across everyone you follow</td>
+          <td>Fetch one precomputed list from a cache</td>
+        </tr>
+        <tr>
+          <td>Painful extreme</td>
+          <td>A user who follows tens of thousands of accounts</td>
+          <td>A celebrity with millions of followers posting</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="caption">
+      (My own framing, from the book's numbers: push wins here because
+      reads massively outnumber writes. That's 2 million timeline
+      queries/s against only 5,800 posts/s, so it pays to do the work once
+      per post instead of once per read.)
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">08</span> The extreme cases</h2>
+    <p>For most users the write cost is modest, but a social network has to plan for the extremes:</p>
+    <div class="def push">
+      <b>Someone following a huge number of very active accounts —</b> their
+      materialized timeline gets a high rate of writes. But they're not
+      likely reading every post in it anyway, so it's OK to <b>drop some of
+      those writes</b> and show them just a sample of the posts from the
+      accounts they follow.
+    </div>
+    <div class="def push">
+      <b>A celebrity with millions of followers posting —</b> inserting that
+      one post into millions of home timelines is a lot of work, and here
+      dropping writes is <b>not</b> OK. One fix is to handle celebrity posts
+      separately: <b>store them on their own and merge them into the
+      materialized timeline when it's read</b>, instead of fanning them out
+      to millions of timelines up front. In other words, pull for
+      celebrities and push for everyone else. Even with tricks like this,
+      handling celebrities can take a lot of infrastructure.
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

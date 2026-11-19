@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real-Time OLAP vs. Traditional OLAP — Notes</title>
+
+
+
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+:host{
+    --paper:#EDEFE9;
+    --card:#F8F9F5;
+    --ink:#1B2420;
+    --ink-soft:#54615A;
+    --rule:#C9CFC5;
+    --realtime:#B5502A;
+    --realtime-soft:#F1DFD1;
+    --batch:#2F4858;
+    --batch-soft:#DCE3E6;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  h1,h2,h3,.mono{
+    font-family:'Space Grotesk', sans-serif;
+  }
+
+  code, .code, table th, .tag, .fig-caption, .stat, .rail-num{
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  a{color:var(--batch);}
+
+  .wrap{
+    max-width:800px;
+    margin:0 auto;
+    padding:0 24px 96px;
+  }
+
+  header.hero{
+    padding:64px 0 40px;
+    border-bottom:1px solid var(--rule);
+    margin-bottom:12px;
+  }
+
+  header.hero .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    letter-spacing:.02em;
+    margin:0 0 14px;
+  }
+
+  header.hero h1{
+    font-size:clamp(30px, 5vw, 44px);
+    line-height:1.12;
+    margin:0 0 16px;
+    font-weight:600;
+    max-width:15ch;
+  }
+
+  header.hero p{
+    max-width:56ch;
+    color:var(--ink-soft);
+    font-size:18px;
+    margin:0;
+  }
+
+  header.hero .legend{
+    display:flex;
+    gap:22px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+
+  .legend-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  .swatch{
+    width:12px;height:12px;
+    border-radius:2px;
+    display:inline-block;
+  }
+
+  .swatch.realtime{background:var(--realtime);}
+  .swatch.batch{background:var(--batch);}
+
+  section.entry{
+    display:grid;
+    grid-template-columns:52px 1fr;
+    column-gap:20px;
+    border-top:1px solid var(--rule);
+    padding:40px 0;
+  }
+
+  section.entry:last-of-type{
+    border-bottom:1px solid var(--rule);
+  }
+
+  .rail{
+    position:relative;
+  }
+
+  .rail-num{
+    font-size:14px;
+    color:var(--ink-soft);
+    padding-top:4px;
+  }
+
+  .entry h2{
+    font-size:23px;
+    font-weight:600;
+    margin:0 0 6px;
+    line-height:1.3;
+  }
+
+  .entry .lede{
+    color:var(--ink-soft);
+    font-size:16px;
+    margin:0 0 22px;
+    max-width:60ch;
+  }
+
+  .entry p{
+    margin:0 0 16px;
+    max-width:66ch;
+  }
+
+  .entry p:last-child{margin-bottom:0;}
+
+  .entry ul, .entry ol{
+    margin:0 0 16px;
+    padding-left:22px;
+    max-width:62ch;
+  }
+
+  .entry li{margin-bottom:8px;}
+
+  strong{font-weight:600;}
+
+  .callout{
+    background:var(--card);
+    border-left:3px solid var(--gold);
+    padding:14px 18px;
+    margin:20px 0;
+    font-size:15.5px;
+    color:var(--ink);
+    max-width:62ch;
+  }
+
+  .callout ul{margin:6px 0 0;padding-left:1.2rem;}
+  .callout li{margin:4px 0;}
+
+  .callout .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--gold);
+    display:block;
+    margin-bottom:4px;
+  }
+
+  table{
+    border-collapse:collapse;
+    width:100%;
+    margin:20px 0 28px;
+    font-size:14.5px;
+    background:var(--card);
+  }
+
+  caption{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    caption-side:top;
+  }
+
+  th, td{
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid var(--rule);
+    vertical-align:top;
+  }
+
+  th{
+    font-size:11.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+    border-bottom:1px solid var(--ink);
+    white-space:nowrap;
+  }
+
+  td.rt{border-left:3px solid var(--realtime);}
+  td.tr{border-left:3px solid var(--batch);}
+
+  .code-block{
+    background:#20281F0D;
+    background:var(--card);
+    border:1px solid var(--rule);
+    padding:16px 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13.5px;
+    line-height:1.6;
+    overflow-x:auto;
+    margin:18px 0;
+    color:var(--ink);
+  }
+
+  .fig{
+    margin:26px 0 30px;
+  }
+
+  .fig svg{
+    width:100%;
+    height:auto;
+    display:block;
+  }
+
+  .fig-caption{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:8px;
+  }
+
+  .diagram-text{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+  }
+
+  .diagram-label{
+    font-family:'Source Serif 4', serif;
+    font-style:italic;
+    font-size:11px;
+    fill:var(--ink-soft);
+  }
+
+  .recap{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1px;
+    background:var(--rule);
+    margin-top:12px;
+    border:1px solid var(--rule);
+  }
+
+  .recap-col{
+    background:var(--card);
+    padding:20px 22px;
+  }
+
+  .recap-col h3{
+    font-size:15px;
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .recap-col ul{
+    margin:0;
+    padding-left:18px;
+    font-size:14.5px;
+  }
+
+  .recap-col li{margin-bottom:9px;}
+
+  footer{
+    margin-top:40px;
+    color:var(--ink-soft);
+    font-size:13px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  @media (max-width:640px){
+    section.entry{
+      grid-template-columns:32px 1fr;
+      column-gap:12px;
+    }
+    .recap{grid-template-columns:1fr;}
+    :host{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="kicker">personal notes — databases</p>
+    <h1>Real-time OLAP vs. traditional OLAP</h1>
+    <p>What Apache Pinot and Druid actually do differently from Snowflake, BigQuery and Redshift — worked through with the LinkedIn feed and Uber surge pricing as running examples.</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch realtime"></span>real-time OLAP — Pinot, Druid, ClickHouse</span>
+      <span class="legend-item"><span class="swatch batch"></span>traditional OLAP — Snowflake, BigQuery, Redshift</span>
+    </div>
+  </header>
+
+  <!-- 01 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">01</div></div>
+    <div class="content">
+      <h2>Two different jobs, both called "OLAP"</h2>
+      <p class="lede">The split isn't about which one is "better" — it's about what each was built to serve.</p>
+      <p>Traditional OLAP (data warehouses like Snowflake, BigQuery, Redshift, or legacy cubes) is built for <strong>internal business reporting over batch data</strong>: a handful of analysts running heavy, flexible SQL. Real-time OLAP (Pinot, Druid, ClickHouse) is built to <strong>power live, interactive applications for thousands of concurrent users</strong> — the engine sitting behind a product feature, not behind a dashboard a person refreshes once an hour.</p>
+      <p>The difference comes down to three axes: <strong>ingestion speed</strong>, <strong>query latency</strong>, and <strong>concurrency</strong>.</p>
+
+      <table>
+        <caption>table 1 — key technical differences</caption>
+        <thead>
+          <tr><th>Feature</th><th>Real-time OLAP</th><th>Traditional OLAP</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Primary use case</td><td class="rt">User-facing analytics — live feeds, dashboards, pricing</td><td class="tr">Internal BI, executive reports, complex SQL transforms</td></tr>
+          <tr><td>Data ingestion</td><td class="rt">Streaming-first: sub-second, direct from Kafka / Kinesis / Pulsar</td><td class="tr">Batch-first: micro-batch or bulk ETL, hourly or nightly</td></tr>
+          <tr><td>Query latency</td><td class="rt">10ms – 200ms</td><td class="tr">2s – 30s+</td></tr>
+          <tr><td>Concurrency</td><td class="rt">10,000s of queries/sec per cluster</td><td class="tr">Tens to hundreds of concurrent queries</td></tr>
+          <tr><td>Query flexibility</td><td class="rt">Filtered aggregations; heavy multi-table joins are limited</td><td class="tr">Fully flexible ANSI SQL, complex multi-stage joins</td></tr>
+          <tr><td>Storage</td><td class="rt">Custom columnar indexes on local NVMe SSD</td><td class="tr">Columnar storage on cloud object storage (S3, GCS)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <span class="label">terms in table 1</span>
+        <ul>
+          <li><strong>Filtered aggregation:</strong> keep only matching rows, then summarize them (count, sum, average) on one table. E.g. views of post 123 per country in the last hour.</li>
+          <li><strong>Columnar storage:</strong> each column's values are stored together, so a query reads only the columns it needs. It still checks every value in those columns to find matches.</li>
+          <li><strong>Custom columnar indexes:</strong> the engine's own lookups on top of the columns. An inverted index lists the rows for each value (IN: rows 1, 3), so there's no scan. A star-tree index keeps totals already added up.</li>
+          <li><strong>Local NVMe SSD:</strong> NVMe = Non-Volatile Memory Express, a very fast way to connect an SSD. Local = inside the server running the query. A read takes about 0.1 ms, while one S3 request takes tens of ms.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">02</div></div>
+    <div class="content">
+      <h2>The three structural trade-offs</h2>
+      <p class="lede">Everything downstream follows from these.</p>
+
+      <p><strong>Fresher data vs. deeper queries.</strong> Pinot and Druid consume streaming events one at a time — an event posted to Kafka is queryable within milliseconds. A warehouse processes in micro-batches or ETL jobs, so freshness is usually minutes to hours behind.</p>
+
+      <p><strong>Concurrency scaling and cost.</strong> A dashboard refreshed by 50,000 external users at once on Snowflake or BigQuery would be cost-prohibitive — serverless compute has to scale with every query. Pinot and Druid instead lean on aggressive pre-aggregation and specialized indexing, so high-QPS workloads stay cheap.</p>
+
+      <p><strong>Schema rigidness.</strong> Real-time engines need the data denormalized (flattened: related tables merged into one wide table ahead of time, so queries need no joins) before it's ingested to hit that speed. Warehouses allow ad-hoc joins across dozens of normalized tables with no pre-flattening required.</p>
+
+      <div class="callout">
+        <span class="label">mental shortcut</span>
+        Traditional OLAP optimizes for how much you can ask in one query. Real-time OLAP optimizes for how many people can ask at once.
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">03</div></div>
+    <div class="content">
+      <h2>Where it's actually used: feeds and surge pricing</h2>
+      <p class="lede">LinkedIn built Pinot in 2014 specifically for this problem; Uber later adopted it as a core engine.</p>
+
+      <p><strong>LinkedIn feed & member metrics.</strong> Serving personalized metrics — feed counts, "who viewed your profile," post analytics — to 1B+ members adds up to 250,000+ requests per second. That isn't 1B divided by anything: it's active members × pages they open × Pinot queries per page. A warehouse would fall over or become unaffordable at that concurrency. Like/view/comment events stream from Kafka into Pinot, get turned into inverted and star-tree indexes in memory, and get read back in under 50ms.</p>
+
+      <p><strong>Uber surge pricing & dispatch.</strong> Surge pricing needs supply-vs-demand counted inside geofenced hexagons every few seconds — a one-minute delay means lost rides or lost revenue. Every location ping streams through Kafka into Pinot, which also supports real-time <em>upserts</em> (tracking a driver's latest position rather than appending endless history). Pricing algorithms query Pinot hundreds of times per second and get answers in under 100ms.</p>
+
+      <div class="fig">
+        <svg viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/></marker>
+          </defs>
+          <rect x="20" y="20" width="180" height="40" fill="none" stroke="var(--ink)" stroke-width="1.4"/>
+          <text x="110" y="44" text-anchor="middle" class="diagram-text" fill="var(--ink)">Kafka / Kinesis stream</text>
+          <line x1="110" y1="60" x2="110" y2="88" stroke="var(--ink-soft)" stroke-width="1.2"/>
+          <line x1="110" y1="88" x2="110" y2="100" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a1)"/>
+
+          <line x1="110" y1="88" x2="350" y2="88" stroke="var(--ink-soft)" stroke-width="1.2"/>
+          <line x1="110" y1="88" x2="590" y2="88" stroke="var(--ink-soft)" stroke-width="1.2"/>
+          <line x1="350" y1="88" x2="350" y2="100" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a1)"/>
+          <line x1="590" y1="88" x2="590" y2="100" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a1)"/>
+
+          <rect x="30" y="100" width="160" height="46" fill="var(--realtime-soft)" stroke="var(--realtime)" stroke-width="1.4"/>
+          <text x="110" y="128" text-anchor="middle" class="diagram-text" fill="var(--ink)">PINOT</text>
+
+          <rect x="270" y="100" width="160" height="46" fill="var(--batch-soft)" stroke="var(--batch)" stroke-width="1.4"/>
+          <text x="350" y="128" text-anchor="middle" class="diagram-text" fill="var(--ink)">DRUID</text>
+
+          <rect x="510" y="100" width="160" height="46" fill="var(--gold-soft)" stroke="var(--gold)" stroke-width="1.4"/>
+          <text x="590" y="128" text-anchor="middle" class="diagram-text" fill="var(--ink)">CLICKHOUSE</text>
+
+          <text x="110" y="168" text-anchor="middle" class="diagram-label">user-facing apps, 100k+ QPS</text>
+          <text x="350" y="168" text-anchor="middle" class="diagram-label">internal real-time monitoring</text>
+          <text x="590" y="168" text-anchor="middle" class="diagram-label">ad-hoc SQL, heavy joins</text>
+
+          <text x="110" y="185" text-anchor="middle" class="diagram-label">LinkedIn, Uber, Stripe</text>
+          <text x="350" y="185" text-anchor="middle" class="diagram-label">Target, Netflix, Cisco</text>
+          <text x="590" y="185" text-anchor="middle" class="diagram-label">Cloudflare, Spotify</text>
+        </svg>
+        <p class="fig-caption">fig. 1 — the same stream, three different destinations depending on the access pattern</p>
+      </div>
+
+      <table>
+        <caption>table 2 — when to reach for which real-time engine</caption>
+        <thead><tr><th>Engine</th><th>Best for</th><th>Typical fit</th></tr></thead>
+        <tbody>
+          <tr><td class="rt"><strong>Pinot</strong></td><td>Massive concurrency (100k+ QPS), simple filtered aggregations</td><td>Kafka streams serving customer-facing dashboards</td></tr>
+          <tr><td class="rt"><strong>Druid</strong></td><td>Time-series event analytics, internal dashboards, log telemetry</td><td>Clickstream and network monitoring</td></tr>
+          <tr><td class="rt"><strong>ClickHouse</strong></td><td>Complex SQL, heavy joins, flexible ad-hoc analytics</td><td>Log processing, ad-hoc analytics</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">04</div></div>
+    <div class="content">
+      <h2>One scroll, two different queries</h2>
+      <p class="lede">Scrolling a feed isn't one call to Pinot — it's a write and, separately, a read.</p>
+
+      <p>Scrolling past a post <strong>writes</strong> to Pinot: the app records that a post was visible for 300ms+, sends that impression event to Kafka, and Pinot ingests it within milliseconds, updating its indexes. Requesting the <em>next batch</em> of posts <strong>reads</strong> from Pinot: the feed recommendation engine asks Pinot how fast a post is accumulating likes and impressions right now, and uses that signal to rank what you see next.</p>
+
+      <div class="fig">
+        <svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--realtime)"/></marker>
+            <marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--batch)"/></marker>
+          </defs>
+
+          <text x="10" y="20" class="diagram-label">write path — fires on every scroll</text>
+          <rect x="10" y="30" width="120" height="42" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="70" y="55" text-anchor="middle" class="diagram-text">your phone</text>
+          <line x1="130" y1="51" x2="200" y2="51" stroke="var(--realtime)" stroke-width="1.3" marker-end="url(#a2)"/>
+          <rect x="205" y="30" width="120" height="42" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="265" y="55" text-anchor="middle" class="diagram-text">Kafka</text>
+          <line x1="325" y1="51" x2="395" y2="51" stroke="var(--realtime)" stroke-width="1.3" marker-end="url(#a2)"/>
+          <rect x="400" y="30" width="120" height="42" fill="var(--realtime-soft)" stroke="var(--realtime)" stroke-width="1.4"/>
+          <text x="460" y="55" text-anchor="middle" class="diagram-text">Pinot (write)</text>
+
+          <text x="10" y="120" class="diagram-label">read path — fires on every feed request</text>
+          <rect x="10" y="130" width="150" height="42" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="85" y="155" text-anchor="middle" class="diagram-text">feed engine</text>
+          <line x1="160" y1="146" x2="230" y2="146" stroke="var(--batch)" stroke-width="1.3" marker-end="url(#a3)"/>
+          <rect x="235" y="130" width="120" height="42" fill="var(--realtime-soft)" stroke="var(--realtime)" stroke-width="1.4"/>
+          <text x="295" y="155" text-anchor="middle" class="diagram-text">Pinot (read)</text>
+          <line x1="235" y1="163" x2="160" y2="163" stroke="var(--batch)" stroke-width="1.3" marker-end="url(#a3)"/>
+          <text x="197" y="180" text-anchor="middle" class="diagram-label" font-size="10">returns live counts</text>
+          <line x1="10" y1="151" x2="10" y2="151" stroke="none"/>
+          <line x1="355" y1="141" x2="430" y2="120" stroke="var(--batch)" stroke-width="1.3" stroke-dasharray="2 2"/>
+        </svg>
+        <p class="fig-caption">fig. 2 — the same Pinot cluster serves both directions of the loop</p>
+      </div>
+
+      <p>Opening your own creator analytics dashboard is the most direct case — the backend fires a query straight at Pinot:</p>
+
+      <div class="code-block">SELECT count(*), company_industry, job_title
+FROM post_impressions
+WHERE post_id = '123456'
+GROUP BY company_industry, job_title;</div>
+
+      <p>Pinot processes that across millions of rows and returns the breakdown in under 50ms.</p>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">05</div></div>
+    <div class="content">
+      <h2>Throughput ≠ concurrency</h2>
+      <p class="lede">This was the confusing part — both "types" of OLAP get called high-throughput, but they mean different things by it.</p>
+
+      <p><strong>Traditional OLAP is high data throughput</strong> — scanning gigabytes per second for a single heavy query — but low query throughput (tens to hundreds of concurrent queries). <strong>Real-time OLAP is high query throughput</strong> — tens of thousands of concurrent queries per second — achieved precisely by doing very little work per query.</p>
+
+      <p>The mechanism: instead of scanning raw files, Pinot's broker routes each incoming query only to the specific servers holding the relevant indexed segments — a <strong>scatter-gather</strong> pattern — and those servers answer from pre-computed indexes in RAM/NVMe rather than scanning columns fresh each time.</p>
+
+      <div class="fig">
+        <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/></marker>
+          </defs>
+          <rect x="270" y="10" width="100" height="36" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="320" y="33" text-anchor="middle" class="diagram-text">query</text>
+          <line x1="320" y1="46" x2="320" y2="66" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a4)"/>
+          <rect x="250" y="70" width="140" height="38" fill="var(--realtime-soft)" stroke="var(--realtime)" stroke-width="1.4"/>
+          <text x="320" y="94" text-anchor="middle" class="diagram-text">broker</text>
+
+          <line x1="320" y1="108" x2="100" y2="140" stroke="var(--ink-soft)" stroke-width="1.1" marker-end="url(#a4)"/>
+          <line x1="320" y1="108" x2="320" y2="140" stroke="var(--ink-soft)" stroke-width="1.1" marker-end="url(#a4)"/>
+          <line x1="320" y1="108" x2="540" y2="140" stroke="var(--ink-soft)" stroke-width="1.1" marker-end="url(#a4)"/>
+
+          <rect x="40" y="142" width="120" height="38" fill="none" stroke="var(--ink)" stroke-width="1.2"/>
+          <text x="100" y="165" text-anchor="middle" class="diagram-text" font-size="10">server — segment A</text>
+          <rect x="260" y="142" width="120" height="38" fill="none" stroke="var(--ink)" stroke-width="1.2"/>
+          <text x="320" y="165" text-anchor="middle" class="diagram-text" font-size="10">server — segment B</text>
+          <rect x="480" y="142" width="120" height="38" fill="none" stroke="var(--ink)" stroke-width="1.2"/>
+          <text x="540" y="165" text-anchor="middle" class="diagram-text" font-size="10">server — segment C</text>
+        </svg>
+        <p class="fig-caption">fig. 3 — broker fans a query out only to the segments that actually hold matching data, then gathers the results back</p>
+      </div>
+
+      <table>
+        <caption>table 3 — throughput reframed</caption>
+        <thead><tr><th></th><th>Traditional OLAP</th><th>Real-time OLAP</th></tr></thead>
+        <tbody>
+          <tr><td>Primary design goal</td><td class="tr">High data volume per query</td><td class="rt">High query volume (QPS) overall</td></tr>
+          <tr><td>Typical concurrency</td><td class="tr">10 – 500 QPS</td><td class="rt">10,000 – 250,000+ QPS</td></tr>
+          <tr><td>Query latency</td><td class="tr">2s – several minutes</td><td class="rt">10ms – 100ms</td></tr>
+          <tr><td>Data freshness</td><td class="tr">Minutes to hours (batch)</td><td class="rt">Milliseconds (direct Kafka)</td></tr>
+          <tr><td>Execution style</td><td class="tr">Full column scans, dynamic joins</td><td class="rt">Index lookups, pre-aggregated metrics</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">06</div></div>
+    <div class="content">
+      <h2>Why this can't replace Postgres</h2>
+      <p class="lede">Speed at analytics doesn't transfer to speed at transactions — they're opposite access patterns.</p>
+
+      <ol>
+        <li><strong>Storage layout.</strong> Postgres keeps a whole row together on disk, so fetching or updating one user is a single fast operation (~0.5ms). Pinot keeps every column in its own file, so reconstructing one full row means opening dozens of files — a point lookup becomes slow and wasteful.</li>
+        <li><strong>ACID transactions.</strong> Postgres has MVCC and row-level locking, so a $50 transfer between two accounts is atomic and race-free. Pinot has no concept of multi-row locks or rollbacks — it can't safely hold a ledger or handle sign-ups.</li>
+        <li><strong>Mutations.</strong> Postgres handles thousands of individual updates/deletes per second effortlessly. Pinot's segments are compressed and immutable — changing a cell means an expensive upsert or a full segment rewrite, and high-frequency random updates make memory usage spike.</li>
+        <li><strong>Joins & normalization.</strong> Postgres joins dynamically across 20+ normalized tables. Pinot needs data flattened before ingestion — heavy dynamic joins defeat its star-tree indexing and kill the latency guarantee.</li>
+      </ol>
+
+      <p>The standard pattern is to run both, connected by change data capture:</p>
+
+      <div class="fig">
+        <svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="a5" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/></marker>
+          </defs>
+          <rect x="10" y="30" width="100" height="40" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="60" y="54" text-anchor="middle" class="diagram-text">app / API</text>
+          <line x1="110" y1="50" x2="150" y2="50" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a5)"/>
+
+          <rect x="155" y="30" width="120" height="40" fill="var(--batch-soft)" stroke="var(--batch)" stroke-width="1.4"/>
+          <text x="215" y="54" text-anchor="middle" class="diagram-text">PostgreSQL</text>
+          <line x1="275" y1="50" x2="330" y2="50" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a5)"/>
+          <text x="302" y="24" text-anchor="middle" class="diagram-label" font-size="10">CDC (Debezium)</text>
+
+          <rect x="335" y="30" width="90" height="40" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="380" y="54" text-anchor="middle" class="diagram-text">Kafka</text>
+          <line x1="425" y1="50" x2="470" y2="50" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a5)"/>
+
+          <rect x="475" y="30" width="100" height="40" fill="var(--realtime-soft)" stroke="var(--realtime)" stroke-width="1.4"/>
+          <text x="525" y="54" text-anchor="middle" class="diagram-text">Pinot</text>
+          <line x1="575" y1="50" x2="620" y2="50" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#a5)"/>
+
+          <rect x="625" y="30" width="65" height="40" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+          <text x="657" y="50" text-anchor="middle" class="diagram-text" font-size="10">analytics</text>
+          <text x="657" y="62" text-anchor="middle" class="diagram-text" font-size="10">UI</text>
+        </svg>
+        <p class="fig-caption">fig. 4 — Postgres owns writes and business logic; Pinot owns read-heavy live analytics on the same data</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">07</div></div>
+    <div class="content">
+      <h2>If columns are split into files, how is a 4-column query still fast?</h2>
+      <p class="lede">The point-lookup weakness and the aggregation strength come from the same design choice.</p>
+
+      <p>A feed analytics query like <code>SELECT sum(impressions), sum(clicks) FROM post_analytics WHERE author_id = X AND date >= Y</code> only touches 4 of a table's 50+ columns. Postgres would still read every column of every matching row off disk. Pinot opens only those 4 column files and ignores the rest — a 90%+ cut in I/O before anything else happens.</p>
+
+      <p>Three mechanisms take it from "faster" to milliseconds:</p>
+      <ul>
+        <li><strong>Inverted indexes</strong> — <code>author_id 987654 → [row 12, row 408, ...]</code> gives the matching row IDs directly from memory, no scanning.</li>
+        <li><strong>Vectorized reads</strong> — the matching rows' impressions/clicks columns load into CPU vector registers (SIMD), summing thousands of values per clock cycle.</li>
+        <li><strong>Star-tree pre-aggregation</strong> — for popular combinations of dimensions, the sum is already computed at ingestion time and sits in a tree node in RAM, so the query is a lookup, not a calculation.</li>
+      </ul>
+
+      <table>
+        <caption>table 4 — the trade-off in one row each</caption>
+        <thead><tr><th>Operation</th><th>Example</th><th>PostgreSQL</th><th>Pinot</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Point lookup<br><span style="color:var(--ink-soft);font-size:12.5px;">1 row, 50 columns</span></td>
+            <td><code>SELECT * WHERE id=123</code></td>
+            <td class="tr">Fast — one contiguous block</td>
+            <td class="rt">Slow — 50 files to stitch together</td>
+          </tr>
+          <tr>
+            <td>Filtered aggregation<br><span style="color:var(--ink-soft);font-size:12.5px;">1M rows, 4 columns</span></td>
+            <td><code>SELECT sum(clicks) WHERE date=today</code></td>
+            <td class="tr">Slow — reads 46 unused fields per row</td>
+            <td class="rt">Fast — 4 files, index + star-tree</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">08</div></div>
+    <div class="content">
+      <h2>How much data actually gets scanned</h2>
+      <p class="lede">Both can store petabytes — the difference is how much of that gets touched per query.</p>
+
+      <p><strong>Per query</strong>, traditional OLAP can legitimately scan gigabytes to petabytes of raw, un-indexed data to run a deep ad-hoc join. Pinot typically scans only <strong>megabytes to a few gigabytes</strong> per query, because indexing (inverted indexes, star-trees, bloom filters) lets it skip 95%+ of the dataset before touching disk or memory at all.</p>
+
+      <p><strong>Total capacity</strong> is a separate question — both scale to petabytes. Traditional warehouses do it cheaply on object storage (S3/GCS) with decoupled compute. Pinot does it across distributed clusters on local SSD/NVMe/memory — Stripe runs 3+ PB in Pinot, Uber and LinkedIn run clusters spanning petabytes of streaming and historical data.</p>
+
+      <table>
+        <caption>table 5 — scan volume vs. total scale</caption>
+        <thead><tr><th>Dimension</th><th>Traditional OLAP</th><th>Real-time OLAP (Pinot)</th></tr></thead>
+        <tbody>
+          <tr><td>Data scanned per query</td><td class="tr">Tens of GBs to petabytes</td><td class="rt">MBs to a few GBs</td></tr>
+          <tr><td>Scan mechanism</td><td class="tr">Full column-file scans over object storage</td><td class="rt">Index lookups, segment skipping, pre-aggregation</td></tr>
+          <tr><td>Total dataset storage</td><td class="tr">100s of petabytes (S3 / GCS)</td><td class="rt">Petabytes (local SSD / NVMe / memory)</td></tr>
+          <tr><td>Concurrency & latency</td><td class="tr">10 – 100s QPS, 2s – 10m</td><td class="rt">10,000 – 250,000+ QPS, 10ms – 100ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- recap -->
+  <section class="entry">
+    <div class="rail"><div class="rail-num">＋</div></div>
+    <div class="content">
+      <h2>Recap — the two identities</h2>
+      <p class="lede">If nothing else sticks, this split should.</p>
+
+      <div class="recap">
+        <div class="recap-col" style="border-left:3px solid var(--realtime);">
+          <h3><span class="swatch realtime"></span>Real-time OLAP</h3>
+          <ul>
+            <li>Streams in from Kafka, queryable in milliseconds</li>
+            <li>Wins on concurrency — thousands of QPS per cluster</li>
+            <li>Answers come from indexes and pre-aggregation, not fresh scans</li>
+            <li>Needs data flattened up front; heavy joins hurt it</li>
+            <li>Sits behind product features, not analyst dashboards</li>
+          </ul>
+        </div>
+        <div class="recap-col" style="border-left:3px solid var(--batch);">
+          <h3><span class="swatch batch"></span>Traditional OLAP</h3>
+          <ul>
+            <li>Loads in batches, freshness measured in minutes to hours</li>
+            <li>Wins on query depth — full flexible ANSI SQL, any join</li>
+            <li>Answers come from scanning raw columnar files at query time</li>
+            <li>Normalized schemas are fine; no pre-flattening needed</li>
+            <li>Sits behind BI tools and internal reporting</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>notes compiled from a conversation on Apache Pinot, Druid, ClickHouse & traditional OLAP</footer>
+
+</div>
+</body>
+</html>

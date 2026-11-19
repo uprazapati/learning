@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microservices and Serverless — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#EDEFE9;
+    --card:#F8F9F5;
+    --ink:#1B2420;
+    --ink-soft:#54615A;
+    --rule:#C9CFC5;
+    --service:#2F4858;
+    --service-soft:#DCE3E6;
+    --serverless:#7A5C3E;
+    --serverless-soft:#EDE2D2;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.service i{background:var(--service);}
+  .swatch.serverless i{background:var(--serverless);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--service);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.serverless{border-left-color:var(--serverless);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--service);}
+  .def.serverless b{color:var(--serverless);}
+  .def.aside b{color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--service-soft);color:var(--service);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .highlight{background:linear-gradient(transparent 55%, var(--gold-soft) 55%);padding:0 .1em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — infrastructure</p>
+  <h1>Microservices and Serverless</h1>
+  <p class="lead">
+    Splitting one big application into many small, independently-owned
+    services — and a newer way of deploying each of those services without
+    thinking about servers at all. From DDIA, Chapter 1
+    ("Microservices and Serverless").
+  </p>
+
+  <div class="legend">
+    <span class="swatch service"><i></i> services / microservices</span>
+    <span class="swatch serverless"><i></i> serverless</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> Same old idea, sharper name</h2>
+    <p>
+      The most common way to spread a system across multiple machines:
+      split it into <b>clients</b> and <b>servers</b>, and let clients make
+      requests to servers (usually over HTTP). Nothing new there — the same
+      process can even be both at once, serving requests from some callers
+      while making its own requests to other services.
+    </p>
+    <div class="def aside">
+      <b>Why he bothers to say this —</b> cloud-native systems lean on
+      splitting into services very heavily (the cloud provider's own
+      services, like S3, <em>are</em> services with one well-defined
+      purpose), which makes it tempting to assume "services" is a cloud
+      idea. It isn't. This way of building applications has had a name
+      for decades: <b>service-oriented architecture (SOA)</b> — and
+      on-premises systems have been built this way since long before
+      "cloud native" was a phrase. More recently, that same idea got
+      refined and renamed <b>microservices architecture</b>.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> SOA vs. microservices — refined, not replaced</h2>
+    <p>
+      The book treats these as <b>the same idea at two points in time</b>,
+      not two different things — microservices is SOA, sharpened. What
+      specifically sharpened on the way from one name to the other:
+    </p>
+    <ul>
+      <li><b>One well-defined purpose per service</b> — e.g. S3's whole job is file storage, nothing else.</li>
+      <li><b>Each service exposes an API</b> that other services call over the network.</li>
+      <li><b>One team owns each service</b>, end to end.</li>
+    </ul>
+    <p class="caption">
+      (Beyond what the book spells out here: older SOA setups often ran
+      through heavier middleware — an "enterprise service bus" routing
+      everything centrally — and services were often bigger and more
+      bundled. Microservices push toward smaller, more independent pieces.
+      That's general industry convention layered on top, not a distinction
+      the book draws explicitly in this section.)
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Why bother splitting it up at all</h2>
+    <table>
+      <thead><tr><th>Benefit</th><th>Why it helps</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Independent updates</td>
+          <td>One team ships a change to their service without having to coordinate with every other team.</td>
+        </tr>
+        <tr>
+          <td>Right-sized hardware</td>
+          <td>Each service gets exactly the resources <em>it</em> needs, not whatever the whole monolith was sized for.</td>
+        </tr>
+        <tr>
+          <td>Hidden implementation</td>
+          <td>Clients only ever see the API. The team behind it can rewrite the internals freely, as long as the API doesn't change.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Why services (usually) don't share a database</h2>
+    <div class="def aside">
+      <b>The rule —</b> each service gets its own database. Databases
+      don't get shared between services.
+    </div>
+    <p>Two concrete reasons, both tracing back to the "hidden implementation" benefit above:</p>
+    <ul>
+      <li>
+        <b>Sharing breaks the hiding.</b> If two services read/write the
+        same database, that database's schema has effectively become part
+        of the API between them — except nobody designed it that way, and
+        now it's hard to change without breaking the other service.
+      </li>
+      <li>
+        <b>Noisy neighbors.</b> A heavy, slow query from one service can
+        drag down performance for a completely unrelated service, purely
+        because they happen to share the same database underneath.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Serverless: outsourcing "when does this run"</h2>
+    <div class="def serverless">
+      <b>Serverless / FaaS (Function as a Service) —</b> a way of deploying
+      a service where the cloud provider handles starting up and shutting
+      down the hardware for you, automatically, based on incoming
+      requests. With a VM, <em>you</em> decide when it starts and stops;
+      with serverless, the provider does that for you, per request.
+    </div>
+    <p>
+      The book draws a direct parallel to something we've already covered:
+      object storage replaced manual capacity planning (deciding in
+      advance how many disks to buy) with metered billing (pay for what
+      you actually store). Serverless does the same thing for <em>code
+      execution</em> — you pay only for the time your code is actually
+      running, instead of paying to keep a server provisioned and idle
+      between requests.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>

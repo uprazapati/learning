@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Warehouse vs. Data Lake — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#EDEFE9;
+    --card:#F8F9F5;
+    --ink:#1B2420;
+    --ink-soft:#54615A;
+    --rule:#C9CFC5;
+    --warehouse:#2F4858;
+    --warehouse-soft:#DCE3E6;
+    --lake:#2E8B6F;
+    --lake-soft:#D8EFE6;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.warehouse i{background:var(--warehouse);}
+  .swatch.lake i{background:var(--lake);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--warehouse);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.lake{border-left-color:var(--lake);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--warehouse);}
+  .def.lake b{color:var(--lake);}
+  .def.aside b{color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--warehouse-soft);color:var(--warehouse);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .highlight{background:linear-gradient(transparent 55%, var(--gold-soft) 55%);padding:0 .1em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — databases</p>
+  <h1>Data Warehouse vs. Data Lake</h1>
+  <p class="lead">
+    Why organizations ended up with two different places to keep analytical
+    data — and what each one is actually good at. From DDIA, Chapter 1
+    ("From data warehouse to data lake").
+  </p>
+
+  <div class="legend">
+    <span class="swatch warehouse"><i></i> data warehouse</span>
+    <span class="swatch lake"><i></i> data lake</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> The one-line difference</h2>
+    <div class="def">
+      <b>Data warehouse —</b> a <em>relational</em> database, queried with SQL,
+      often through BI software. Data is cleaned and shaped into a fixed
+      schema <em>before</em> it goes in.
+    </div>
+    <div class="def lake">
+      <b>Data lake —</b> a centralized repository of raw <em>files</em> — any
+      format, no schema required. Data goes in almost exactly as it came out
+      of the source system, via ETL.
+    </div>
+    <p>
+      Same underlying data, two different philosophies about
+      <span class="highlight">when</span> you decide its structure:
+      up front (warehouse) or later, whenever someone actually reads it (lake).
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Why the warehouse wasn't enough</h2>
+    <p>
+      A warehouse is great for a business analyst asking "what were sales by
+      region last quarter?" — a SQL query answers that cleanly. It's a worse
+      fit for a <b>data scientist</b> who needs to:
+    </p>
+    <ul>
+      <li>
+        Turn rows and columns into a vector of numbers — <b>features</b> — to
+        train an ML model. This <i>feature engineering</i> step usually needs
+        custom code that's awkward to express as SQL.
+      </li>
+      <li>
+        Run NLP over text (reviews, support tickets) or computer vision over
+        images to pull out structure that wasn't there in the first place.
+      </li>
+    </ul>
+    <p>
+      So most data scientists reach for Python (Pandas, scikit-learn), R, or
+      Spark instead of writing SQL against the warehouse — tools a relational
+      database doesn't naturally serve.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> The data lake's answer</h2>
+    <p>
+      Give data scientists a copy of <b>everything</b>, in its rawest form,
+      and let each person shape it however their own tool needs:
+    </p>
+    <ul>
+      <li>No fixed file format — Avro or Parquet records, plain text, images, video, sensor readings, even genome sequences</li>
+      <li>Filled by the same ETL processes that feed the warehouse</li>
+      <li>Usually cheaper to run — commodity object storage (like S3), not a relational engine</li>
+    </ul>
+    <div class="def aside">
+      <b>Wait, "ETL" into a <i>raw</i> lake? —</b> If nothing's being
+      transformed, why call it ETL? Because there's usually still a thin,
+      technical transform: re-encoding data from the operational system's
+      internal format into a file format the lake can store, like Avro or
+      Parquet. That's a structural transform, not a business-logic one — no
+      cleaning, no reshaping into a schema. What actually happens is closer
+      to <b>ELT</b> (Extract → Load → <i>Transform later</i>, whenever
+      someone reads it) than classic ETL. The book itself hedges on this a
+      paragraph later, switching to the more general term
+      <i>data pipeline</i> instead of ETL.
+    </div>
+    <div class="def lake">
+      <b>The sushi principle —</b> "raw data is better." Keep the unprocessed
+      original around, and let every consumer transform it their own way,
+      instead of committing to one transformation up front.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> How the data actually flows</h2>
+    <div class="diagram">
+      <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="dwl-a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+
+        <!-- Operational systems -->
+        <rect x="20" y="18" width="170" height="46" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="105" y="46" text-anchor="middle" class="diagram-text" fill="var(--ink)">Operational systems</text>
+
+        <!-- arrow down to lake -->
+        <line x1="105" y1="64" x2="105" y2="104" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a1)"/>
+        <text x="150" y="88" class="diagram-text" fill="var(--ink-soft)" font-size="12">ETL</text>
+
+        <!-- Data lake -->
+        <rect x="20" y="108" width="170" height="52" rx="6" fill="none" stroke="var(--lake)" stroke-width="1.6"/>
+        <text x="105" y="130" text-anchor="middle" class="diagram-text" fill="var(--lake)" font-weight="bold">Data lake</text>
+        <text x="105" y="148" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">raw files, any format</text>
+
+        <!-- arrow lake -> warehouse -->
+        <line x1="190" y1="122" x2="330" y2="60" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a1)"/>
+        <text x="220" y="88" class="diagram-text" fill="var(--ink-soft)" font-size="12">transform</text>
+
+        <!-- arrow lake -> data scientists -->
+        <line x1="190" y1="150" x2="330" y2="200" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a1)"/>
+        <text x="212" y="188" class="diagram-text" fill="var(--ink-soft)" font-size="12">raw access</text>
+
+        <!-- Data warehouse -->
+        <rect x="335" y="34" width="180" height="52" rx="6" fill="none" stroke="var(--warehouse)" stroke-width="1.6"/>
+        <text x="425" y="56" text-anchor="middle" class="diagram-text" fill="var(--warehouse)" font-weight="bold">Data warehouse</text>
+        <text x="425" y="74" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">relational, fixed schema</text>
+
+        <!-- Data scientists -->
+        <rect x="335" y="174" width="180" height="52" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="425" y="196" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-weight="bold">Data scientists</text>
+        <text x="425" y="214" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">Python, R, Spark</text>
+
+        <!-- arrow warehouse -> BI -->
+        <line x1="515" y1="60" x2="565" y2="60" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a1)"/>
+
+        <!-- BI / analysts -->
+        <rect x="570" y="34" width="130" height="52" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="635" y="56" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-weight="bold">BI tools</text>
+        <text x="635" y="74" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">analysts, SQL</text>
+      </svg>
+    </div>
+    <p class="caption">
+      ETL has generalized into <b>data pipelines</b>, and the lake is now
+      often just a stop along the way to the warehouse — not a dead end.
+      Business analysts still get their clean, relational warehouse; data
+      scientists get direct access to the raw material instead of waiting
+      for someone to shape it for them first.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Side by side</h2>
+    <table>
+      <thead>
+        <tr><th>&nbsp;</th><th>Data warehouse</th><th>Data lake</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Data model</td>
+          <td>Relational, fixed schema, decided before load</td>
+          <td>None enforced — schema decided by whoever reads it</td>
+        </tr>
+        <tr>
+          <td>Contents</td>
+          <td>Cleaned, transformed tables</td>
+          <td>Raw files: DB records, text, images, video, sensor data…</td>
+        </tr>
+        <tr>
+          <td>Access</td>
+          <td>SQL, BI software</td>
+          <td>Python/Pandas, R, Spark, etc.</td>
+        </tr>
+        <tr>
+          <td>Best for</td>
+          <td>Business analysts, reporting</td>
+          <td>Data scientists, ML feature engineering, NLP/CV</td>
+        </tr>
+        <tr>
+          <td>Storage cost</td>
+          <td>Higher — relational engine</td>
+          <td>Lower — commodity object storage</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> Reverse ETL — closing the loop</h2>
+    <div class="def aside">
+      <b>The goal —</b> get an answer that was worked out in the warehouse
+      in front of the person who needs it, without them having to go open a
+      dashboard to find it.
+    </div>
+    <p>
+      Everything so far moves data <b>into</b> the warehouse/lake. Reverse
+      ETL runs that the other way: it takes something computed in the
+      warehouse and writes it back <b>out</b> into the tools people already
+      work in all day — their CRM (the customer database sales teams use,
+      e.g. Salesforce), a support tool, an email tool.
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 620 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="dwl-a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+        <rect x="20" y="30" width="190" height="52" rx="6" fill="none" stroke="var(--warehouse)" stroke-width="1.6"/>
+        <text x="115" y="52" text-anchor="middle" class="diagram-text" fill="var(--warehouse)" font-weight="bold">Data warehouse</text>
+        <text x="115" y="70" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">works out: "who might cancel?"</text>
+
+        <line x1="210" y1="56" x2="380" y2="56" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a2)"/>
+        <text x="295" y="44" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">reverse ETL</text>
+
+        <rect x="385" y="30" width="215" height="52" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="492" y="52" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-weight="bold">Sales rep's CRM</text>
+        <text x="492" y="70" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="12">shows it on the customer record</text>
+      </svg>
+    </div>
+    <p class="caption">
+      Example: the warehouse works out which customers are likely to
+      cancel ("churn risk"), once, using SQL, across every customer.
+      Reverse ETL then writes that score onto each customer's record in the
+      CRM — so a sales rep just <em>sees</em> "churn risk: high" sitting
+      there already, instead of going to look it up somewhere else.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">08</span> Turning raw data into "recommended for you"</h2>
+    <div class="def aside">
+      <b>The goal —</b> take the raw clicks and purchases already sitting in
+      the data lake, and turn them into something a real person sees on
+      screen, like Amazon's "customers who bought this also bought…" row.
+    </div>
+    <p>Here's the path from raw data to that one feature, step by step:</p>
+    <ul>
+      <li>
+        <b>1. The raw signal is already there.</b> Every click and purchase
+        a user makes already lands in the data lake — that's just the same
+        ETL pipeline from section 03, nothing new.
+      </li>
+      <li>
+        <b>2. Find the pattern.</b> A program looks across
+        <em>everyone's</em> history and learns things like "people who buy
+        X often also buy Y." This pattern-finding step is what people mean
+        by "training a model" — think of it as building a giant lookup
+        table, except the computer works out the rules from examples,
+        instead of a person writing them by hand.
+      </li>
+      <li>
+        <b>3. Save that pattern-finder somewhere reliable.</b> This is all
+        TFX, Kubeflow, and MLflow actually do — keep track of which version
+        is the current one, and make it safe to swap in a fresher version
+        later without breaking anything. They're just bookkeeping for step
+        2 — they don't change the idea, they make it safe to run in a real
+        company with real traffic.
+      </li>
+      <li>
+        <b>4. Ask it, live.</b> When you open the product, it asks the
+        pattern-finder "given what <em>this</em> person has done, what
+        should we show them?" — the ranked answer becomes the "recommended
+        for you" row.
+      </li>
+    </ul>
+    <div class="diagram">
+      <svg viewBox="0 0 770 110" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="dwl-a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+        <rect x="10" y="20" width="125" height="50" rx="6" fill="none" stroke="var(--lake)" stroke-width="1.4"/>
+        <text x="72" y="42" text-anchor="middle" class="diagram-text" fill="var(--lake)" font-weight="bold" font-size="12">Clicks &amp;</text>
+        <text x="72" y="58" text-anchor="middle" class="diagram-text" fill="var(--lake)" font-weight="bold" font-size="12">purchases</text>
+
+        <line x1="135" y1="45" x2="155" y2="45" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a3)"/>
+
+        <rect x="155" y="20" width="140" height="50" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="225" y="42" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-size="12">2. Find the</text>
+        <text x="225" y="58" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-size="12">pattern</text>
+
+        <line x1="295" y1="45" x2="315" y2="45" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a3)"/>
+
+        <rect x="315" y="20" width="150" height="50" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="390" y="42" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-size="12">3. Save it</text>
+        <text x="390" y="58" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="10">TFX / Kubeflow / MLflow</text>
+
+        <line x1="465" y1="45" x2="485" y2="45" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a3)"/>
+
+        <rect x="485" y="20" width="130" height="50" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="550" y="42" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-size="12">4. Ask it,</text>
+        <text x="550" y="58" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-size="12">live</text>
+
+        <line x1="615" y1="45" x2="635" y2="45" stroke="var(--ink-soft)" stroke-width="1.2" marker-end="url(#dwl-a3)"/>
+
+        <rect x="635" y="20" width="125" height="50" rx="6" fill="none" stroke="var(--warehouse)" stroke-width="1.6"/>
+        <text x="697" y="42" text-anchor="middle" class="diagram-text" fill="var(--warehouse)" font-weight="bold" font-size="12">"Recommended</text>
+        <text x="697" y="58" text-anchor="middle" class="diagram-text" fill="var(--warehouse)" font-weight="bold" font-size="12">for you"</text>
+      </svg>
+    </div>
+    <p class="caption">
+      Same shape as reverse ETL, one section up: something gets worked out
+      centrally, then the answer gets pushed out to wherever a person
+      actually sees it — a CRM there, the product itself here.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">09</span> Where this is heading</h2>
+    <p>
+      As pipelines matured, organizations started paying more attention to
+      <em>managing</em> them — governance, privacy, and compliance (GDPR,
+      CCPA) all push toward treating data pipelines as first-class,
+      operated systems rather than a one-off ETL script. The DataOps
+      movement is the name for that shift.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>

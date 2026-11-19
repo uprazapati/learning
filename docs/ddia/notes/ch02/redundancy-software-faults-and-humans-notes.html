@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redundancy, Software Faults, and Humans — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#F0F1EE;
+    --card:#FBFBFA;
+    --ink:#1F2226;
+    --ink-soft:#5C636B;
+    --rule:#CDD1D5;
+    --hw:#B0610E;
+    --hw-soft:#F4E1CF;
+    --sw:#2F6BC4;
+    --sw-soft:#DCE6F7;
+    --human:#2E7D5B;
+    --human-soft:#D8EDE3;
+    --fail:#B42318;
+    --fail-soft:#F7DAD6;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+    --code-bg:#F2F4F7;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.hw i{background:var(--hw);}
+  .swatch.sw i{background:var(--sw);}
+  .swatch.human i{background:var(--human);}
+  .swatch.fail i{background:var(--fail);}
+  .swatch.aside i{background:var(--gold);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--sw);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.hw{border-left-color:var(--hw);}
+  .def.human{border-left-color:var(--human);}
+  .def.fail{border-left-color:var(--fail);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--sw);}
+  .def.hw b{color:var(--hw);}
+  .def.human b{color:var(--human);}
+  .def.fail b{color:var(--fail);}
+  .def.aside b{color:var(--gold);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:76ch;}
+  .grid2 .def{margin:0;}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--sw-soft);color:var(--sw);}
+  thead th.hw{background:var(--hw-soft);color:var(--hw);}
+  thead th.human{background:var(--human-soft);color:var(--human);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);border-radius:4px;padding:.05em .3em;font-size:.88em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .diagram-small{font-size:11px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+    .grid2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — reliability</p>
+  <h1>Redundancy, Software Faults, and Humans</h1>
+  <p class="lead">
+    How hardware redundancy works and why it isn't enough, why distributed
+    systems tolerate whole machines and zones instead, why software faults are
+    worse than hardware faults (they hit every node at once), why "human error"
+    is a symptom rather than a cause, and why reliability matters even for
+    ordinary apps. From DDIA, Chapter 2 ("Tolerating hardware faults through
+    redundancy", "Software faults", "Humans and Reliability", and the "How
+    important is reliability?" sidebar).
+  </p>
+
+  <div class="legend">
+    <span class="swatch hw"><i></i> hardware faults</span>
+    <span class="swatch sw"><i></i> software faults and fault tolerance</span>
+    <span class="swatch human"><i></i> humans and organizations</span>
+    <span class="swatch fail"><i></i> failures, and answers to avoid</span>
+    <span class="swatch aside"><i></i> asides (anything beyond the book is labeled)</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> Hardware redundancy, and its limits</h2>
+    <p>
+      The first response to unreliable hardware is usually to <b>add redundancy
+      to the individual hardware components</b>, to reduce the failure rate of
+      the system:
+    </p>
+    <table>
+      <thead><tr><th class="hw">Where</th><th class="hw">Redundancy</th></tr></thead>
+      <tbody>
+        <tr><td>Disks</td><td><b>RAID</b>: spreading data across multiple disks in the same machine, so a failed disk doesn't cause data loss</td></tr>
+        <tr><td>Servers</td><td>Dual power supplies and hot-swappable CPUs</td></tr>
+        <tr><td>Datacenters</td><td>Batteries and diesel generators for backup power</td></tr>
+      </tbody>
+    </table>
+    <p>Such redundancy can often keep a machine running uninterrupted for <b>years</b>.</p>
+    <div class="def hw">
+      <b>Redundancy works best when faults are independent —</b> that is, when
+      one fault happening doesn't change the likelihood of another. But
+      experience has shown <b>significant correlations between component
+      failures</b>, and a whole server rack or an entire datacenter still
+      becomes unavailable more often than we would like.
+    </div>
+    <div class="def aside">
+      <b>Why independence matters (my arithmetic) —</b> if two components each
+      fail on a given day with probability 1 in 10,000, independence means both
+      fail on the same day with probability 1 in 100 million (1/10,000 ×
+      1/10,000). Correlation (beyond the book: e.g. the same manufacturing
+      batch, power feed, or rack) makes the second failure much more likely
+      once the first has happened, so the real odds are far worse than that
+      multiplication says.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Tolerating whole machines, racks, and zones</h2>
+    <p>
+      Hardware redundancy increases the uptime of a <b>single machine</b>. A
+      distributed system has other advantages, such as being able to tolerate
+      the <b>complete outage of one datacenter</b>. That's why cloud systems
+      focus less on the reliability of individual machines and instead aim to
+      make services <b>highly available by tolerating faulty nodes at the
+      software level</b>.
+    </p>
+    <div class="def">
+      <b>Availability zones —</b> how cloud providers identify which resources
+      are physically co-located. Resources in the same place are more likely
+      to fail at the same time than geographically separated resources.
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Two availability zones; zone A is unavailable and a machine in zone B takes over its work"><defs><marker id="rsh-a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="var(--sw)"/></marker></defs><rect x="20" y="20" width="310" height="190" rx="10" fill="none" stroke="var(--fail)" stroke-width="1.8"/><text x="34" y="42" class="diagram-text" font-weight="700" fill="var(--ink)">availability zone A</text><rect x="36" y="56" width="135" height="140" rx="6" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="46" y="74" class="diagram-small" fill="var(--ink-soft)">rack 1</text><rect x="51" y="84" width="105" height="28" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="103.5" y="102.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine: down</text><rect x="51" y="120" width="105" height="28" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="103.5" y="138.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine: down</text><rect x="51" y="156" width="105" height="28" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="103.5" y="174.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine: down</text><rect x="181" y="56" width="135" height="140" rx="6" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="191" y="74" class="diagram-small" fill="var(--ink-soft)">rack 2</text><rect x="196" y="84" width="105" height="28" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="248.5" y="102.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine: down</text><rect x="196" y="120" width="105" height="28" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="248.5" y="138.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine: down</text><rect x="196" y="156" width="105" height="28" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="248.5" y="174.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine: down</text><rect x="430" y="20" width="310" height="190" rx="10" fill="none" stroke="var(--ink-soft)" stroke-width="1.4"/><text x="444" y="42" class="diagram-text" font-weight="700" fill="var(--ink)">availability zone B</text><rect x="446" y="56" width="135" height="140" rx="6" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="456" y="74" class="diagram-small" fill="var(--ink-soft)">rack 1</text><rect x="461" y="84" width="105" height="28" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="513.5" y="102.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine</text><rect x="461" y="120" width="105" height="28" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="513.5" y="138.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">takes over</text><rect x="461" y="156" width="105" height="28" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="513.5" y="174.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine</text><rect x="591" y="56" width="135" height="140" rx="6" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="601" y="74" class="diagram-small" fill="var(--ink-soft)">rack 2</text><rect x="606" y="84" width="105" height="28" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="658.5" y="102.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine</text><rect x="606" y="120" width="105" height="28" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="658.5" y="138.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine</text><rect x="606" y="156" width="105" height="28" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="658.5" y="174.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">machine</text><line x1="334" y1="134" x2="455" y2="134" stroke="var(--sw)" stroke-width="1.8" marker-end="url(#rsh-a1)"/><text x="381" y="124" text-anchor="middle" class="diagram-small" fill="var(--ink)">work moves</text><text x="20" y="232" class="diagram-small" fill="var(--fail)" font-weight="700">zone A is unavailable: everything in it can fail together</text><text x="740" y="232" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">zone B is far enough away to keep running</text></svg>
+      <p class="caption">
+        My drawing of the idea (beyond the book's figures). The fault-tolerance
+        techniques in the book are designed to survive the loss of an entire
+        machine, rack, or availability zone. They generally work by letting a
+        machine in one datacenter take over when a machine in another
+        datacenter fails or becomes unreachable. The book covers them in
+        Chapters 6 and 10, and in other places.
+      </p>
+    </div>
+    <table>
+      <thead><tr><th>Approach</th><th>Where the redundancy lives</th><th>What it survives</th></tr></thead>
+      <tbody>
+        <tr><td><b>Hardware redundancy</b></td><td>Inside one machine or datacenter (RAID, dual power supplies, generators)</td><td>A failed component, while the machine keeps running</td></tr>
+        <tr><td><b>Software fault tolerance</b> (the book's focus)</td><td>Across machines, racks, and availability zones</td><td>Losing a whole machine, rack, or availability zone</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Tolerating the loss of entire machines also has <b>operational
+      advantages</b>. A single-server system needs planned downtime whenever
+      you have to reboot the machine, for example to apply operating system
+      security patches.
+    </p>
+    <div class="def">
+      <b>Rolling upgrade —</b> a multi-node fault-tolerant system can be
+      patched by restarting <b>one node at a time</b>, without affecting the
+      service for users. The book discusses it further in Chapter 5.
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 760 328" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rolling upgrade: four nodes are patched one at a time so the service stays up; a single server is down while it reboots"><text x="10" y="16" class="diagram-text" font-weight="700" fill="var(--ink)">Rolling upgrade across 4 nodes</text><text x="164.0" y="36" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 1</text><text x="282.0" y="36" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 2</text><text x="400.0" y="36" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 3</text><text x="518.0" y="36" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 4</text><text x="590" y="36" class="diagram-small" fill="var(--ink-soft)">service for users</text><text x="10" y="61" class="diagram-small" fill="var(--ink)">before</text><rect x="110" y="44" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="164.0" y="61.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="228" y="44" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="282.0" y="61.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="346" y="44" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="400.0" y="61.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="464" y="44" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="518.0" y="61.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><text x="590" y="61" class="diagram-small" fill="var(--ink)">up</text><text x="10" y="95" class="diagram-small" fill="var(--ink)">step 1</text><rect x="110" y="78" width="108" height="26" rx="5" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="4 3"/><text x="164.0" y="95.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">restarting</text><rect x="228" y="78" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="282.0" y="95.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="346" y="78" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="400.0" y="95.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="464" y="78" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="518.0" y="95.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><text x="590" y="95" class="diagram-small" fill="var(--ink)">up (3 of 4 serving)</text><text x="10" y="129" class="diagram-small" fill="var(--ink)">step 2</text><rect x="110" y="112" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="164.0" y="129.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="228" y="112" width="108" height="26" rx="5" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="4 3"/><text x="282.0" y="129.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">restarting</text><rect x="346" y="112" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="400.0" y="129.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="464" y="112" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="518.0" y="129.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><text x="590" y="129" class="diagram-small" fill="var(--ink)">up (3 of 4 serving)</text><text x="10" y="163" class="diagram-small" fill="var(--ink)">step 3</text><rect x="110" y="146" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="164.0" y="163.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="228" y="146" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="282.0" y="163.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="346" y="146" width="108" height="26" rx="5" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="4 3"/><text x="400.0" y="163.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">restarting</text><rect x="464" y="146" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="518.0" y="163.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><text x="590" y="163" class="diagram-small" fill="var(--ink)">up (3 of 4 serving)</text><text x="10" y="197" class="diagram-small" fill="var(--ink)">step 4</text><rect x="110" y="180" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="164.0" y="197.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="228" y="180" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="282.0" y="197.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="346" y="180" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="400.0" y="197.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="464" y="180" width="108" height="26" rx="5" fill="none" stroke="var(--ink-soft)" stroke-width="1.2" stroke-dasharray="4 3"/><text x="518.0" y="197.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">restarting</text><text x="590" y="197" class="diagram-small" fill="var(--ink)">up (3 of 4 serving)</text><text x="10" y="231" class="diagram-small" fill="var(--ink)">after</text><rect x="110" y="214" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="164.0" y="231.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="228" y="214" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="282.0" y="231.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="346" y="214" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="400.0" y="231.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><rect x="464" y="214" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="518.0" y="231.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">patched</text><text x="590" y="231" class="diagram-small" fill="var(--ink)">up</text><text x="10" y="274" class="diagram-text" font-weight="700" fill="var(--ink)">The same patch on a single server</text><rect x="110" y="282" width="108" height="26" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="164.0" y="299.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">old version</text><rect x="228" y="282" width="108" height="26" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="282.0" y="299.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">down: rebooting</text><rect x="346" y="282" width="108" height="26" rx="5" fill="var(--sw-soft)" stroke="var(--sw)" stroke-width="1.2"/><text x="400.0" y="299.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">patched</text><text x="590" y="299" class="diagram-small" fill="var(--fail)" font-weight="700">down while it reboots</text></svg>
+      <p class="caption">
+        My illustration (beyond the book). Four nodes get the same patch one
+        at a time, so three are always serving and users never see an outage.
+        Patching a single server means the service is down while it reboots.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Software faults are correlated</h2>
+    <p>
+      Hardware failures can be weakly correlated, but they're still mostly
+      independent: if one disk fails, the other disks in the same machine will
+      likely be fine, at least for a while. Software faults are different.
+    </p>
+    <div class="def">
+      <b>Why software faults are worse —</b> they are often <b>very highly
+      correlated</b>, because it's common for many nodes to run the same
+      software and so have the same bugs. Such faults are <b>harder to
+      anticipate</b>, and they tend to cause <b>many more system failures</b>
+      than uncorrelated hardware faults.
+    </div>
+    <div class="diagram">
+      <svg viewBox="0 0 760 236" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="A hardware fault takes down one node; a software bug takes down every node running the same code at once"><text x="40" y="22" class="diagram-text" font-weight="700" fill="var(--ink)">Hardware fault: mostly independent</text><rect x="40" y="30" width="100" height="44" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="90.0" y="49.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 1</text><text x="90.0" y="63.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">ok</text><rect x="154" y="30" width="100" height="44" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="204.0" y="49.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 2</text><text x="204.0" y="63.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">ok</text><rect x="268" y="30" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="318.0" y="49.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 3</text><text x="318.0" y="63.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">disk failed</text><rect x="382" y="30" width="100" height="44" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="432.0" y="49.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 4</text><text x="432.0" y="63.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">ok</text><rect x="496" y="30" width="100" height="44" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="546.0" y="49.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 5</text><text x="546.0" y="63.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">ok</text><rect x="610" y="30" width="100" height="44" rx="5" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="660.0" y="49.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 6</text><text x="660.0" y="63.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">ok</text><text x="40" y="94" class="diagram-small" fill="var(--ink-soft)">one node is down; the others are probably fine for a while</text><text x="40" y="126" class="diagram-text" font-weight="700" fill="var(--ink)">Software fault: highly correlated</text><rect x="40" y="134" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="90.0" y="153.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 1</text><text x="90.0" y="167.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">same bug</text><rect x="154" y="134" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="204.0" y="153.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 2</text><text x="204.0" y="167.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">same bug</text><rect x="268" y="134" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="318.0" y="153.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 3</text><text x="318.0" y="167.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">same bug</text><rect x="382" y="134" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="432.0" y="153.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 4</text><text x="432.0" y="167.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">same bug</text><rect x="496" y="134" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="546.0" y="153.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 5</text><text x="546.0" y="167.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">same bug</text><rect x="610" y="134" width="100" height="44" rx="5" fill="var(--fail-soft)" stroke="var(--fail)" stroke-width="1.2"/><text x="660.0" y="153.0" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node 6</text><text x="660.0" y="167.0" text-anchor="middle" class="diagram-small" fill="var(--ink)" font-weight="700">same bug</text><text x="40" y="198" class="diagram-small" fill="var(--ink-soft)">every node runs the same code, so one trigger (e.g. a leap second) hits them all at once</text></svg>
+      <p class="caption">
+        My illustration (beyond the book). A hardware fault takes out one node.
+        A software bug takes out every node running that code, all at the same
+        moment, which is exactly the case redundancy can't help with.
+      </p>
+    </div>
+    <p>The book's examples of software faults:</p>
+    <table>
+      <thead><tr><th>Kind of fault</th><th>The book's examples</th></tr></thead>
+      <tbody>
+        <tr><td><b>A bug that makes every node fail at the same time</b>, in particular circumstances</td><td>On June 30, 2012, a <b>leap second</b> made many Java applications hang simultaneously, because of a bug in the Linux kernel. It brought down several internet services.<br>Because of a firmware bug, all SSDs of certain models suddenly fail after precisely <b>32,768 hours</b> of operation (less than four years), and the data on them can't be recovered.</td></tr>
+        <tr><td><b>A runaway process</b> that uses up a shared, limited resource: CPU time, memory, disk space, network bandwidth, or threads</td><td>A process that uses too much memory while processing a large request may be killed by the operating system. A bug in a client library could cause a much higher request volume than anticipated.</td></tr>
+        <tr><td><b>A service the system depends on</b> slows down, becomes unresponsive, or starts returning corrupted responses</td><td>-</td></tr>
+        <tr><td><b>Emergent behavior</b> from an interaction between different systems</td><td>Behavior that doesn't occur when each system is tested in isolation</td></tr>
+        <tr><td><b>Cascading failures</b></td><td>A problem in one component makes another component overloaded and slow, which in turn brings down another component</td></tr>
+      </tbody>
+    </table>
+    <div class="def aside">
+      <b>The 32,768 hours (my arithmetic) —</b> that's about 3.7 years, and
+      32,768 = 2<sup>15</sup>, which is the kind of number where a counter
+      overflows. Beyond the book: the well-known case is HPE's 2019 warning
+      about some of its SAS SSDs.
+    </div>
+    <div class="def">
+      <b>Dormant bugs and broken assumptions —</b> the bugs behind these faults
+      often <b>lie dormant</b> for a long time, until an unusual set of
+      circumstances triggers them. That reveals that the software was making
+      some assumption about its environment which is <i>usually</i> true, but
+      eventually stops being true for some reason.
+    </div>
+    <p>
+      There's <b>no quick solution</b> to systematic faults in software. Lots of
+      small things can help:
+    </p>
+    <ul>
+      <li>carefully thinking about assumptions and interactions in the system</li>
+      <li>thorough testing</li>
+      <li>process isolation</li>
+      <li>allowing processes to crash and restart</li>
+      <li>avoiding feedback loops such as retry storms (the book's "When an Overloaded System Won't Recover", in my Describing Performance note, section 03)</li>
+      <li>measuring, monitoring, and analyzing system behavior in production</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Humans and reliability</h2>
+    <p>
+      Humans design and build software systems, and the operators who keep
+      them running are human too. Unlike machines, humans don't just follow
+      rules: one of their strengths is being <b>creative and adaptive</b> in
+      getting their jobs done. But that also makes them unpredictable, and
+      sometimes leads to mistakes that cause failures, despite the best
+      intentions.
+    </p>
+    <div class="def human">
+      <b>Configuration changes beat hardware —</b> one study of large internet
+      services found that <b>configuration changes by operators were the
+      leading cause of outages</b>, while hardware faults (servers or network)
+      played a role in only <b>10%–25%</b> of cases.
+    </div>
+    <div class="def human">
+      <b>"Human error" is a symptom, not a cause —</b> it's tempting to call
+      these problems human error and hope to fix them by controlling people
+      more tightly, with stricter procedures and compliance with rules. But
+      blaming people for mistakes is <b>counterproductive</b>. What we call
+      human error is really a <b>symptom of a problem with the sociotechnical
+      system</b> in which people are trying their best to do their jobs.
+      Complex systems also have emergent behavior, where unexpected
+      interactions between components can lead to failures.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> What actually helps</h2>
+    <p>Technical measures that minimize the impact of human mistakes:</p>
+    <table>
+      <thead><tr><th class="human">Measure</th><th class="human">Detail</th></tr></thead>
+      <tbody>
+        <tr><td><b>Thorough testing</b></td><td>Both handwritten tests and <i>property testing</i> on lots of random inputs</td></tr>
+        <tr><td><b>Rollback mechanisms</b></td><td>For quickly reverting configuration changes</td></tr>
+        <tr><td><b>Gradual rollouts</b></td><td>Of new code</td></tr>
+        <tr><td><b>Monitoring and observability</b></td><td>Detailed and clear monitoring, and observability tools for diagnosing production issues</td></tr>
+        <tr><td><b>Well-designed interfaces</b></td><td>That encourage "the right thing" and discourage "the wrong thing"</td></tr>
+      </tbody>
+    </table>
+    <div class="def aside">
+      <b>Property testing (beyond the book) —</b> instead of writing each test
+      case by hand, you state a rule that must always hold (e.g. decoding an
+      encoded value gives back the original), and a tool such as QuickCheck or
+      Hypothesis tries thousands of random inputs looking for one that breaks it.
+    </div>
+    <div class="def human">
+      <b>The real problem is often priorities —</b> all of these measures cost
+      time and money. In the pragmatic reality of everyday business,
+      organizations often put revenue-generating work ahead of resilience
+      against mistakes: given a choice between more features and more testing,
+      many understandably choose features. So when a preventable mistake
+      inevitably happens, <b>blaming the person who made it doesn't make
+      sense. The problem is the organization's priorities.</b>
+    </div>
+    <div class="def human">
+      <b>Blameless postmortems —</b> a culture organizations are increasingly
+      adopting. After an incident, the people involved are encouraged to share
+      full details of what happened <b>without fear of punishment</b>, so that
+      others in the organization can learn how to prevent similar problems.
+      This can uncover a need to change business priorities, invest in
+      neglected areas, change the incentives for the people involved, or bring
+      another systemic issue to management's attention.
+    </div>
+    <p>When investigating an incident, be <b>suspicious of simplistic answers</b>. Neither of these is productive:</p>
+    <div class="grid2">
+      <div class="def fail"><b>Blame —</b> "Bob should have been more careful when deploying that change."</div>
+      <div class="def fail"><b>Silver bullet —</b> "We must rewrite the backend in Haskell."</div>
+    </div>
+    <div class="def human">
+      <b>Instead —</b> management should take the opportunity to learn the
+      details of how the sociotechnical system works <b>from the point of view
+      of the people who work with it every day</b>, and improve it based on
+      that feedback.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> How important is reliability? (the book's sidebar)</h2>
+    <p>
+      Reliability isn't just for nuclear power stations and air traffic
+      control. Ordinary applications are expected to work reliably too. Bugs in
+      business applications cost productivity (and create legal risks if
+      figures are reported incorrectly), and outages of e-commerce sites can
+      cost a lot in lost revenue and damaged reputation.
+    </p>
+    <table>
+      <thead><tr><th>What goes wrong</th><th>How bad, in many applications</th></tr></thead>
+      <tbody>
+        <tr><td>A temporary outage of a few minutes, or even a few hours</td><td>Tolerable</td></tr>
+        <tr><td><b>Permanent data loss or corruption</b></td><td><b>Catastrophic</b></td></tr>
+      </tbody>
+    </table>
+    <div class="def">
+      <b>The photo app test —</b> consider a parent who stores all the pictures
+      and videos of their children in your photo application. How would they
+      feel if that database was suddenly corrupted? Would they know how to
+      restore their collection from a backup?
+    </div>
+    <div class="def fail">
+      <b>The Post Office Horizon scandal —</b> between 1999 and 2019, hundreds
+      of people managing Post Office branches in Britain were convicted of
+      theft or fraud because the accounting software showed shortfalls in
+      their accounts. Eventually it became clear that many of these shortfalls
+      were due to <b>bugs in the software</b>, and many convictions were
+      overturned. Probably the largest miscarriage of justice in British
+      history, it came from an assumption in English law that <b>computers
+      operate correctly</b> (so evidence produced by computers is reliable)
+      unless there's evidence to the contrary. Software engineers may laugh at
+      the idea that software could ever be bug-free, but that's little solace
+      to the people who were wrongfully imprisoned, declared bankrupt, or even
+      took their own lives after a wrongful conviction caused by an unreliable
+      computer system.
+    </div>
+    <div class="def aside">
+      <b>Cutting corners, consciously —</b> in some situations you might
+      choose to sacrifice reliability to reduce development cost (e.g. a
+      prototype for an unproven market). But be very conscious of when you're
+      cutting corners, and keep the potential consequences in mind.
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

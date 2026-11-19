@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scalability — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#F0F1EE;
+    --card:#FBFBFA;
+    --ink:#1F2226;
+    --ink-soft:#5C636B;
+    --rule:#CDD1D5;
+    --grid:#E3E5E8;
+    --sc:#2F6BC4;
+    --sc-soft:#DCE6F7;
+    --arch:#B0610E;
+    --arch-soft:#F4E1CF;
+    --prin:#2E7D5B;
+    --prin-soft:#D8EDE3;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+    --ram-soft:#E6E0F3;
+    --ram:#5B4BA6;
+    --s1:#2a78d6;
+    --s2:#eb6834;
+    --s3:#1baf7a;
+    --code-bg:#F2F4F7;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.sc i{background:var(--sc);}
+  .swatch.arch i{background:var(--arch);}
+  .swatch.prin i{background:var(--prin);}
+  .swatch.aside i{background:var(--gold);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--sc);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def ul{margin:8px 0 0;}
+  .def.arch{border-left-color:var(--arch);}
+  .def.prin{border-left-color:var(--prin);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--sc);}
+  .def.arch b{color:var(--arch);}
+  .def.prin b{color:var(--prin);}
+  .def.aside b{color:var(--gold);}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:76ch;}
+  .grid2 .def{margin:0;}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--sc-soft);color:var(--sc);}
+  thead th.arch{background:var(--arch-soft);color:var(--arch);}
+  thead th.prin{background:var(--prin-soft);color:var(--prin);}
+  tbody tr:last-child td{border-bottom:none;}
+  td.num{font-variant-numeric:tabular-nums;}
+
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);border-radius:4px;padding:.05em .3em;font-size:.88em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .diagram-small{font-size:11px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+    .grid2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — scalability</p>
+  <h1>Scalability</h1>
+  <p class="lead">
+    What scalability means and why it isn't a yes/no label, how to describe the
+    load on a system, what linear scalability is, the three ways to give a
+    service more hardware (shared-memory, shared-disk, shared-nothing), and the
+    book's principles for scaling. From DDIA, Chapter 2 ("Scalability",
+    "Understanding Load", "Shared-Memory, Shared-Disk, and Shared-Nothing
+    Architectures", and "Principles for Scalability").
+  </p>
+
+  <div class="legend">
+    <span class="swatch sc"><i></i> scalability and load</span>
+    <span class="swatch arch"><i></i> architectures</span>
+    <span class="swatch prin"><i></i> principles</span>
+    <span class="swatch aside"><i></i> asides (anything beyond the book is labeled)</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> What scalability means</h2>
+    <p>
+      A system that works reliably today won't necessarily work reliably in the
+      future. A common reason it degrades is <b>increased load</b>. Maybe it has
+      grown from 10,000 concurrent users to 100,000, or from 1 million to
+      10 million. Maybe it processes much larger volumes of data than before.
+    </p>
+    <div class="def">
+      <b>Scalability —</b> the term for a system's <b>ability to cope with
+      increased load</b>.
+    </div>
+    <div class="def">
+      <b>"You're not Google or Amazon" —</b> people sometimes say "Stop
+      worrying about scale and just use a relational database." Whether that
+      advice applies to you <b>depends on the type of application you're
+      building</b>.
+    </div>
+    <div class="def prin">
+      <b>For a new product, keep it simple and flexible —</b> if you're building
+      a new product with only a few users (perhaps at a startup), the main
+      engineering goal is usually to keep the system as simple and flexible as
+      possible, so you can easily change the product as you learn what
+      customers need. Worrying about hypothetical future scale is
+      <b>counterproductive</b> there. In the best case it's wasted effort and
+      premature optimization. In the worst case it <b>locks you into an
+      inflexible design</b> and makes the application harder to evolve.
+    </div>
+    <div class="def">
+      <b>Scalability is not a one-dimensional label —</b> it's meaningless to
+      say "X is scalable" or "Y doesn't scale." Discussing scalability means
+      asking questions like these:
+      <ul>
+        <li>If the system grows in a particular way, what are our options for coping with the growth?</li>
+        <li>How can we add computing resources to handle the additional load?</li>
+        <li>Based on current growth projections, when will we hit the limits of our current architecture?</li>
+      </ul>
+    </div>
+    <p>
+      If your application does become popular and handles a growing load,
+      you'll <b>learn where your performance bottlenecks are</b> and along
+      which dimensions you need to scale. That's the point to start worrying
+      about techniques for scalability.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Understanding load</h2>
+    <p>
+      First you need a clear understanding of the <b>current</b> load on the
+      system. Only then can you discuss growth questions such as "What happens
+      if our load doubles?"
+    </p>
+    <table>
+      <thead><tr><th>How to describe load</th><th>The book's examples</th></tr></thead>
+      <tbody>
+        <tr><td><b>Throughput</b> (most often)</td><td>Requests per second to a service, gigabytes of new data arriving per day, shopping cart checkouts per hour</td></tr>
+        <tr><td><b>The peak</b> of a quantity that varies</td><td>The number of users online at the same time, in the social network case study</td></tr>
+        <tr><td><b>Other statistics</b> that shape the access patterns, and so the scalability requirements</td><td>The ratio of reads to writes in a database, the hit rate of a cache, the number of data items per user (followers, in the case study)</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Maybe the <b>average case</b> is what matters for you, or maybe your
+      bottleneck is dominated by a <b>small number of extreme cases</b>. It all
+      depends on your application. (My link: in the home timelines case study,
+      the extreme cases were the celebrities with millions of followers.)
+    </p>
+    <p>Once you understand the load, there are two ways to look at what happens when it increases:</p>
+    <div class="grid2">
+      <div class="def">
+        <b>Keep the resources fixed —</b> increase the load in a certain way and
+        keep the CPUs, memory, network bandwidth, etc. unchanged. How is the
+        system's performance affected?
+      </div>
+      <div class="def">
+        <b>Keep the performance fixed —</b> increase the load in a certain way.
+        How much do you need to increase the resources to keep the performance
+        unchanged?
+      </div>
+    </div>
+    <p>
+      Usually the goal is to keep performance <b>within the SLA</b> (see section
+      02 of my response-time metrics note) while <b>minimizing the cost</b> of
+      running the system. More computing resources cost more. Some types of
+      hardware are more cost-effective than others, and that can change over
+      time as new hardware becomes available.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Linear scalability</h2>
+    <div class="def">
+      <b>Linear scalability —</b> if <b>doubling the resources</b> lets you
+      handle <b>twice the load</b> with the same performance, you have linear
+      scalability. That's considered a good thing.
+    </div>
+    <table>
+      <thead><tr><th>To handle 2x the load with the same performance, you need</th><th>How often (per the book)</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td><b>Less than 2x</b> the resources</td><td>Occasionally</td><td>Economies of scale, or a better distribution of the peak load</td></tr>
+        <tr><td><b>Exactly 2x</b> (linear)</td><td>The good case</td><td>-</td></tr>
+        <tr><td><b>More than 2x</b>: cost grows faster than linearly</td><td><b>Much more likely</b></td><td>Many possible inefficiencies. For example, with a lot of data, processing a single write request may involve more work than with a small amount of data, even if the request is the same size.</td></tr>
+      </tbody>
+    </table>
+    <div class="diagram">
+      <svg viewBox="0 0 760 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Resources needed as load grows: linear, faster than linear, and less than linear"><text x="30" y="18" class="diagram-text" font-weight="700" fill="var(--ink)">Resources needed to keep performance the same</text><line x1="30" y1="34" x2="48" y2="34" stroke="var(--s1)" stroke-width="2" stroke-linecap="round"/><text x="54" y="38" class="diagram-small" fill="var(--ink)">linear</text><line x1="105.4" y1="34" x2="123.4" y2="34" stroke="var(--s2)" stroke-width="2" stroke-linecap="round"/><text x="129.4" y="38" class="diagram-small" fill="var(--ink)">faster than linear (most likely)</text><line x1="308.20000000000005" y1="34" x2="326.20000000000005" y2="34" stroke="var(--s3)" stroke-width="2" stroke-linecap="round"/><text x="332.20000000000005" y="38" class="diagram-small" fill="var(--ink)">less than linear (occasionally)</text><line x1="100" y1="270.0" x2="560" y2="270.0" stroke="var(--ink-soft)" stroke-width="1"/><text x="90" y="274.0" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">0x</text><line x1="100" y1="215.0" x2="560" y2="215.0" stroke="var(--grid)" stroke-width="1"/><text x="90" y="219.0" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">2x</text><line x1="100" y1="160.0" x2="560" y2="160.0" stroke="var(--grid)" stroke-width="1"/><text x="90" y="164.0" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">4x</text><line x1="100" y1="105.0" x2="560" y2="105.0" stroke="var(--grid)" stroke-width="1"/><text x="90" y="109.0" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">6x</text><line x1="100" y1="50.0" x2="560" y2="50.0" stroke="var(--grid)" stroke-width="1"/><text x="90" y="54.0" text-anchor="end" class="diagram-small" fill="var(--ink-soft)">8x</text><text x="100.0" y="288" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">1x</text><text x="253.3" y="288" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">2x</text><text x="406.7" y="288" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">3x</text><text x="560.0" y="288" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">4x</text><text x="330" y="310" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">load, as a multiple of today's</text><line x1="253.3" y1="50" x2="253.3" y2="270" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="4 4"/><text x="259.3" y="60" class="diagram-small" fill="var(--ink-soft)">twice the load</text><path d="M100.0,242.5 L107.7,241.1 L115.3,239.8 L123.0,238.4 L130.7,237.0 L138.3,235.6 L146.0,234.2 L153.7,232.9 L161.3,231.5 L169.0,230.1 L176.7,228.8 L184.3,227.4 L192.0,226.0 L199.7,224.6 L207.3,223.2 L215.0,221.9 L222.7,220.5 L230.3,219.1 L238.0,217.8 L245.7,216.4 L253.3,215.0 L261.0,213.6 L268.7,212.2 L276.3,210.9 L284.0,209.5 L291.7,208.1 L299.3,206.8 L307.0,205.4 L314.7,204.0 L322.3,202.6 L330.0,201.2 L337.7,199.9 L345.3,198.5 L353.0,197.1 L360.7,195.8 L368.3,194.4 L376.0,193.0 L383.7,191.6 L391.3,190.2 L399.0,188.9 L406.7,187.5 L414.3,186.1 L422.0,184.8 L429.7,183.4 L437.3,182.0 L445.0,180.6 L452.7,179.2 L460.3,177.9 L468.0,176.5 L475.7,175.1 L483.3,173.8 L491.0,172.4 L498.7,171.0 L506.3,169.6 L514.0,168.2 L521.7,166.9 L529.3,165.5 L537.0,164.1 L544.7,162.8 L552.3,161.4 L560.0,160.0" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><text x="570" y="164.0" class="diagram-small" fill="var(--ink)">linear: 4x</text><g><title>linear: twice the load needs 2.0x the resources</title><circle cx="253.3" cy="215.0" r="12" fill="transparent"/><circle cx="253.3" cy="215.0" r="4.5" fill="var(--s1)" stroke="var(--card)" stroke-width="2"/></g><path d="M100.0,242.5 L107.7,240.4 L115.3,238.3 L123.0,236.1 L130.7,233.9 L138.3,231.6 L146.0,229.2 L153.7,226.9 L161.3,224.4 L169.0,222.0 L176.7,219.5 L184.3,216.9 L192.0,214.3 L199.7,211.7 L207.3,209.0 L215.0,206.3 L222.7,203.6 L230.3,200.8 L238.0,198.0 L245.7,195.1 L253.3,192.2 L261.0,189.3 L268.7,186.3 L276.3,183.3 L284.0,180.3 L291.7,177.2 L299.3,174.1 L307.0,170.9 L314.7,167.8 L322.3,164.5 L330.0,161.3 L337.7,158.0 L345.3,154.7 L353.0,151.4 L360.7,148.0 L368.3,144.6 L376.0,141.2 L383.7,137.7 L391.3,134.2 L399.0,130.7 L406.7,127.1 L414.3,123.5 L422.0,119.9 L429.7,116.3 L437.3,112.6 L445.0,108.9 L452.7,105.1 L460.3,101.4 L468.0,97.6 L475.7,93.8 L483.3,89.9 L491.0,86.1 L498.7,82.2 L506.3,78.2 L514.0,74.3 L521.7,70.3 L529.3,66.3 L537.0,62.3 L544.7,58.2 L552.3,54.1 L560.0,50.0" fill="none" stroke="var(--s2)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><text x="570" y="54.0" class="diagram-small" fill="var(--ink)">faster than linear: 8x</text><g><title>faster than linear (most likely): twice the load needs 2.8x the resources</title><circle cx="253.3" cy="192.2" r="12" fill="transparent"/><circle cx="253.3" cy="192.2" r="4.5" fill="var(--s2)" stroke="var(--card)" stroke-width="2"/></g><path d="M100.0,242.5 L107.7,241.4 L115.3,240.3 L123.0,239.2 L130.7,238.2 L138.3,237.1 L146.0,236.1 L153.7,235.0 L161.3,234.0 L169.0,233.0 L176.7,232.0 L184.3,231.0 L192.0,229.9 L199.7,228.9 L207.3,228.0 L215.0,227.0 L222.7,226.0 L230.3,225.0 L238.0,224.0 L245.7,223.1 L253.3,222.1 L261.0,221.2 L268.7,220.2 L276.3,219.3 L284.0,218.3 L291.7,217.4 L299.3,216.5 L307.0,215.5 L314.7,214.6 L322.3,213.7 L330.0,212.8 L337.7,211.8 L345.3,210.9 L353.0,210.0 L360.7,209.1 L368.3,208.2 L376.0,207.3 L383.7,206.4 L391.3,205.5 L399.0,204.7 L406.7,203.8 L414.3,202.9 L422.0,202.0 L429.7,201.1 L437.3,200.3 L445.0,199.4 L452.7,198.5 L460.3,197.7 L468.0,196.8 L475.7,195.9 L483.3,195.1 L491.0,194.2 L498.7,193.4 L506.3,192.5 L514.0,191.7 L521.7,190.8 L529.3,190.0 L537.0,189.1 L544.7,188.3 L552.3,187.5 L560.0,186.6" fill="none" stroke="var(--s3)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><text x="570" y="190.6" class="diagram-small" fill="var(--ink)">less than linear: 3x</text><g><title>less than linear (occasionally): twice the load needs 1.7x the resources</title><circle cx="253.3" cy="222.1" r="12" fill="transparent"/><circle cx="253.3" cy="222.1" r="4.5" fill="var(--s3)" stroke="var(--card)" stroke-width="2"/></g></svg>
+      <p class="caption">
+        My sketch (beyond the book). The curves are made-up shapes, not data:
+        they just show the three cases from the table above. Hover a dot to see
+        what each case needs for twice today's load.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Scaling up vs scaling out</h2>
+    <div class="diagram">
+      <svg viewBox="0 0 760 530" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Four architectures: one big shared-memory machine, machines sharing a disk array, shared-nothing nodes, and compute nodes sharing a storage service"><rect x="10" y="10" width="360" height="250" rx="10" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="24" y="34" class="diagram-text" font-weight="700" fill="var(--ink)">Shared-memory (scaling up)</text><text x="24" y="50" class="diagram-small" fill="var(--ink-soft)">one bigger machine; all threads share its RAM</text><rect x="40" y="64" width="300" height="180" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="190.0" y="78" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">one machine</text><rect x="62" y="86" width="36" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="80.0" y="103.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="106" y="86" width="36" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="124.0" y="103.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="150" y="86" width="36" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="168.0" y="103.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="194" y="86" width="36" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="212.0" y="103.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="238" y="86" width="36" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="256.0" y="103.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="282" y="86" width="36" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="300.0" y="103.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="60" y="124" width="260" height="34" rx="5" fill="var(--ram-soft)" stroke="var(--arch)" stroke-width="2"/><text x="190" y="145" text-anchor="middle" class="diagram-small" font-weight="700" fill="var(--ink)">RAM, shared by all threads</text><rect x="62" y="174" width="76" height="26" rx="4" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="1"/><text x="100.0" y="191.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">disk</text><rect x="152" y="174" width="76" height="26" rx="4" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="1"/><text x="190.0" y="191.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">disk</text><rect x="242" y="174" width="76" height="26" rx="4" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="1"/><text x="280.0" y="191.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">disk</text><text x="190" y="224" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">2x the hardware costs well over 2x</text><rect x="390" y="10" width="360" height="250" rx="10" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="404" y="34" class="diagram-text" font-weight="700" fill="var(--ink)">Shared-disk</text><text x="404" y="50" class="diagram-small" fill="var(--ink-soft)">own CPUs and RAM, one shared disk array</text><rect x="414" y="64" width="96" height="66" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="462.0" y="78" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">machine</text><rect x="422" y="90" width="38" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="441.0" y="107.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="464" y="90" width="38" height="26" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="483.0" y="107.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><line x1="462" y1="130" x2="462" y2="152" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="522" y="64" width="96" height="66" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="570.0" y="78" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">machine</text><rect x="530" y="90" width="38" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="549.0" y="107.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="572" y="90" width="38" height="26" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="591.0" y="107.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><line x1="570" y1="130" x2="570" y2="152" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="630" y="64" width="96" height="66" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="678.0" y="78" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">machine</text><rect x="638" y="90" width="38" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="657.0" y="107.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="680" y="90" width="38" height="26" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="699.0" y="107.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><line x1="678" y1="130" x2="678" y2="152" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="414" y="152" width="312" height="22" rx="4" fill="var(--card)" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="570" y="167" text-anchor="middle" class="diagram-small" fill="var(--ink)">fast network</text><line x1="570" y1="174" x2="570" y2="194" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="450" y="194" width="240" height="44" rx="6" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="2"/><text x="570" y="213" text-anchor="middle" class="diagram-small" font-weight="700" fill="var(--ink)">shared disk array</text><text x="570" y="229" text-anchor="middle" class="diagram-small" fill="var(--ink)">NAS or SAN</text><rect x="10" y="270" width="360" height="250" rx="10" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="24" y="294" class="diagram-text" font-weight="700" fill="var(--ink)">Shared-nothing (scaling out)</text><text x="24" y="310" class="diagram-small" fill="var(--ink-soft)">each node has its own CPU, RAM, and disk</text><rect x="34" y="324" width="96" height="116" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="82.0" y="338" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node</text><rect x="42" y="346" width="80" height="24" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="82.0" y="362.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="42" y="376" width="80" height="24" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="82.0" y="392.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><rect x="42" y="406" width="80" height="24" rx="4" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="1"/><text x="82.0" y="422.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">disk</text><line x1="82" y1="440" x2="82" y2="466" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="142" y="324" width="96" height="116" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="190.0" y="338" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node</text><rect x="150" y="346" width="80" height="24" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="190.0" y="362.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="150" y="376" width="80" height="24" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="190.0" y="392.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><rect x="150" y="406" width="80" height="24" rx="4" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="1"/><text x="190.0" y="422.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">disk</text><line x1="190" y1="440" x2="190" y2="466" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="250" y="324" width="96" height="116" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="298.0" y="338" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">node</text><rect x="258" y="346" width="80" height="24" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="298.0" y="362.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="258" y="376" width="80" height="24" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="298.0" y="392.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><rect x="258" y="406" width="80" height="24" rx="4" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="1"/><text x="298.0" y="422.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">disk</text><line x1="298" y1="440" x2="298" y2="466" stroke="var(--ink-soft)" stroke-width="1.2"/><line x1="34" y1="466" x2="346" y2="466" stroke="var(--ink-soft)" stroke-width="1.6"/><text x="190" y="486" text-anchor="middle" class="diagram-small" fill="var(--ink)">conventional network</text><text x="190" y="502" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">coordination happens in software</text><rect x="390" y="270" width="360" height="250" rx="10" fill="none" stroke="var(--rule)" stroke-width="1.2"/><text x="404" y="294" class="diagram-text" font-weight="700" fill="var(--ink)">Cloud-native: storage and compute split</text><text x="404" y="310" class="diagram-small" fill="var(--ink-soft)">compute nodes share one storage service</text><rect x="414" y="324" width="96" height="66" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="462.0" y="338" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">compute node</text><rect x="422" y="350" width="38" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="441.0" y="367.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="464" y="350" width="38" height="26" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="483.0" y="367.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><line x1="462" y1="390" x2="570" y2="422" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="522" y="324" width="96" height="66" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="570.0" y="338" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">compute node</text><rect x="530" y="350" width="38" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="549.0" y="367.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="572" y="350" width="38" height="26" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="591.0" y="367.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><line x1="570" y1="390" x2="570" y2="422" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="630" y="324" width="96" height="66" rx="6" fill="none" stroke="var(--ink-soft)" stroke-width="1.2"/><text x="678.0" y="338" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">compute node</text><rect x="638" y="350" width="38" height="26" rx="4" fill="var(--sc-soft)" stroke="var(--sc)" stroke-width="1"/><text x="657.0" y="367.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">CPU</text><rect x="680" y="350" width="38" height="26" rx="4" fill="var(--ram-soft)" stroke="var(--ram)" stroke-width="1"/><text x="699.0" y="367.0" text-anchor="middle" class="diagram-small" fill="var(--ink)">RAM</text><line x1="678" y1="390" x2="570" y2="422" stroke="var(--ink-soft)" stroke-width="1.2"/><rect x="440" y="422" width="260" height="50" rx="6" fill="var(--arch-soft)" stroke="var(--arch)" stroke-width="2"/><text x="570" y="442" text-anchor="middle" class="diagram-small" font-weight="700" fill="var(--ink)">storage service</text><text x="570" y="459" text-anchor="middle" class="diagram-small" fill="var(--ink)">API designed for the database</text><text x="570" y="498" text-anchor="middle" class="diagram-small" fill="var(--ink-soft)">not a filesystem (NAS) or block device (SAN)</text></svg>
+      <p class="caption">
+        My drawing of the four setups the book describes (beyond the book's
+        figures). Blue boxes are CPUs, purple is RAM, and orange is disk or
+        storage. The orange outline marks what several machines share.
+      </p>
+    </div>
+    <div class="def arch">
+      <b>Vertical scaling (scaling up) —</b> the simplest way to give a service
+      more hardware is to <b>move it to a more powerful machine</b>. Individual
+      CPU cores are no longer getting much faster, but you can buy a machine
+      (or rent a cloud instance) with more CPU cores, more RAM, and more disk
+      space.
+    </div>
+    <div class="def arch">
+      <b>Shared-memory architecture —</b> on a single machine you get
+      parallelism from multiple processes or threads, and all the threads of a
+      process can access the same RAM. The problem: <b>cost grows faster than
+      linearly</b>. A high-end machine with twice the hardware of a lower-spec
+      one typically costs significantly more than twice as much, and because of
+      bottlenecks it's unlikely to handle twice the load anyway.
+    </div>
+    <div class="def arch">
+      <b>Shared-disk architecture —</b> several machines with their own CPUs
+      and RAM store data on an <b>array of disks shared among them</b>,
+      connected over a fast network: <i>network-attached storage</i> (NAS) or
+      a <i>storage area network</i> (SAN). It has traditionally been used for
+      on-premises data warehousing, but <b>contention and the overhead of
+      locking</b> limit how far it scales.
+    </div>
+    <div class="def arch">
+      <b>Shared-nothing architecture (horizontal scaling, scaling out) —</b> a
+      distributed system of multiple nodes, each with <b>its own CPUs, RAM, and
+      disks</b>. Any coordination between nodes happens in software, over a
+      conventional network.
+    </div>
+    <div class="grid2">
+      <div class="def prin">
+        <b>Why shared-nothing has become popular —</b>
+        <ul>
+          <li>It can potentially <b>scale linearly</b>.</li>
+          <li>It can use whatever hardware has the best price/performance ratio, especially in the cloud.</li>
+          <li>It can more easily add or remove hardware as the load goes up or down.</li>
+          <li>It can be <b>more fault-tolerant</b>, by spreading the system across multiple datacenters and regions.</li>
+        </ul>
+      </div>
+      <div class="def arch">
+        <b>Its downsides —</b>
+        <ul>
+          <li>It needs explicit <b>sharding</b> (Chapter 7).</li>
+          <li>It brings all the <b>complexity of distributed systems</b> (Chapter 9).</li>
+        </ul>
+      </div>
+    </div>
+    <div class="def arch">
+      <b>Cloud-native: storage separated from compute —</b> some cloud native
+      databases use separate services for storage and for executing
+      transactions, with multiple compute nodes sharing the same storage
+      service. That's a bit like shared-disk, but it avoids the scalability
+      problems of the older systems: instead of looking like a filesystem (NAS)
+      or a block device (SAN), the storage service offers a <b>specialized API
+      designed for what the database needs</b>. (The book's "Separation of
+      storage and compute" in Chapter 1, in my Cloud-Native System
+      Architecture note.)
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Principles for scalability</h2>
+    <div class="def prin">
+      <b>No magic scaling sauce —</b> the architecture of systems that operate
+      at large scale is usually <b>highly specific to the application</b>.
+      There's no generic, one-size-fits-all scalable architecture (informally
+      known as <i>magic scaling sauce</i>). For example, these two systems look
+      very different, even though they move the same amount of data:
+    </div>
+    <table>
+      <thead><tr><th class="prin">System</th><th class="prin">Requests</th><th class="prin">Size of each</th><th class="prin">Data throughput</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td class="num">100,000 per second</td><td class="num">1 kB</td><td class="num">100 MB/second</td></tr>
+        <tr><td>B</td><td class="num">3 per minute</td><td class="num">2 GB</td><td class="num">100 MB/second</td></tr>
+      </tbody>
+    </table>
+    <p class="caption">
+      (My arithmetic check: <span style="white-space:nowrap">100,000 × 1 kB per second = 100 MB/second</span>, and
+      <span style="white-space:nowrap">3 × 2 GB per minute = 6 GB per minute = 100 MB/second</span>.)
+    </p>
+    <p>
+      Also, an architecture that fits one level of load is <b>unlikely to cope
+      with 10 times that load</b>. On a fast-growing service you'll probably
+      need to rethink the architecture at <b>every order of magnitude</b> of
+      load growth. Since the application's needs will likely change too, it's
+      usually not worth planning scaling needs more than one order of magnitude
+      ahead.
+    </p>
+    <div class="def prin">
+      <b>Break the system into smaller, independent parts —</b> a good general
+      principle is to split a system into smaller components that can operate
+      <b>largely independently</b> of one another. It's the idea behind
+      microservices (Chapter 1, in my Microservices and Serverless note),
+      sharding (Chapter 7), stream processing (Chapter 12), and shared-nothing
+      architectures. The challenge is knowing <b>where to draw the line</b>
+      between things that should be together and things that should be apart.
+      (Other books cover design guidelines for microservices. This book covers
+      sharding shared-nothing systems in Chapter 7.)
+    </div>
+    <div class="def prin">
+      <b>Don't make it more complicated than necessary —</b>
+      <ul>
+        <li>If a <b>single-machine database</b> will do the job, it's probably better than a complicated distributed setup.</li>
+        <li><i>Autoscaling</i> systems (which add or remove resources automatically as demand changes) are cool, but if your load is fairly predictable, a <b>manually scaled</b> system may have fewer operational surprises.</li>
+        <li>A system with <b>5 services</b> is simpler than one with 50.</li>
+      </ul>
+      Good architectures usually mix approaches pragmatically.
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

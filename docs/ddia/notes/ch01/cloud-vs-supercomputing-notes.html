@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Computing vs. Supercomputing — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#EDEFE9;
+    --card:#F8F9F5;
+    --ink:#1B2420;
+    --ink-soft:#54615A;
+    --rule:#C9CFC5;
+    --cloud:#2F4858;
+    --cloud-soft:#DCE3E6;
+    --hpc:#6B4A8A;
+    --hpc-soft:#E6DEEF;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.cloud i{background:var(--cloud);}
+  .swatch.hpc i{background:var(--hpc);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  p{max-width:70ch;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--gold);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def b{color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--cloud-soft);color:var(--cloud);}
+  thead th:last-child{background:var(--hpc-soft);color:var(--hpc);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — infrastructure</p>
+  <h1>Cloud Computing vs. Supercomputing</h1>
+  <p class="lead">
+    Two different ways to build a very large computing system, built for
+    two different jobs. From DDIA, Chapter 1 ("Cloud Computing Versus
+    Supercomputing").
+  </p>
+
+  <div class="legend">
+    <span class="swatch cloud"><i></i> cloud computing</span>
+    <span class="swatch hpc"><i></i> supercomputing (HPC)</span>
+  </div>
+
+  <hr>
+
+  <table>
+    <thead><tr><th>Cloud computing</th><th>Supercomputing (HPC)</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Online services, business systems — serve user requests with high availability</td>
+        <td>Heavy scientific computation — weather/climate models, molecular dynamics, optimization problems</td>
+      </tr>
+      <tr>
+        <td>Can't stop the cluster — services must keep running continuously</td>
+        <td>Checkpoints progress to disk; on failure, stops everything, fixes the node, resumes from the last checkpoint</td>
+      </tr>
+      <tr>
+        <td>Network/machines shared by <em>mutually untrusting</em> organizations — needs real security: VMs for isolation, encryption, authentication</td>
+        <td>Nodes talk via shared memory and RDMA (fast, low latency) — assumes everyone on the system already trusts each other</td>
+      </tr>
+      <tr>
+        <td>Datacenter networks: standard IP/Ethernet, arranged for high bandwidth across the whole network</td>
+        <td>Specialized network shapes (meshes, toruses) tuned for each job's specific, known communication pattern</td>
+      </tr>
+      <tr>
+        <td>Nodes can be spread across different geographic regions</td>
+        <td>Nodes assumed to all sit close together</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="def">
+    <b>Why this is worth knowing —</b> big analytical systems sometimes
+    borrow HPC techniques, so it's useful to recognize them. But these
+    notes are mainly about services that must stay continuously available —
+    which is the cloud column, not the HPC one.
+  </div>
+
+</div>
+</body>
+</html>

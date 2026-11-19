@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud-Native System Architecture — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#EDEFE9;
+    --card:#F8F9F5;
+    --ink:#1B2420;
+    --ink-soft:#54615A;
+    --rule:#C9CFC5;
+    --generic:#2F4858;
+    --generic-soft:#DCE3E6;
+    --native:#3E7A5B;
+    --native-soft:#DCEFE1;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.generic i{background:var(--generic);}
+  .swatch.native i{background:var(--native);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--generic);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.native{border-left-color:var(--native);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--generic);}
+  .def.native b{color:var(--native);}
+  .def.aside b{color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--generic-soft);color:var(--generic);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .highlight{background:linear-gradient(transparent 55%, var(--gold-soft) 55%);padding:0 .1em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — infrastructure</p>
+  <h1>Cloud-Native System Architecture</h1>
+  <p class="lead">
+    "Runs in the cloud" and "cloud native" are not the same thing — and the
+    difference is exactly what gets you better performance, faster
+    recovery, easier scaling, and bigger datasets. From DDIA, Chapter 1
+    ("Cloud Native System Architecture").
+  </p>
+
+  <div class="legend">
+    <span class="swatch generic"><i></i> generic (self-hosted-style)</span>
+    <span class="swatch native"><i></i> cloud native</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> Two ways to use the same cloud</h2>
+    <div class="def aside">
+      <b>The goal —</b> tell apart "I moved my old system onto a cloud
+      machine" from "I built a system that actually exploits what the
+      cloud can do" — because only the second one gets you the good stuff.
+    </div>
+    <p>
+      Almost any self-hosted software can just be lifted onto a rented
+      cloud virtual machine (<b>IaaS</b>) and left to run exactly as before
+      — same generic CPU, RAM, and local disk it always used, just rented
+      instead of owned. That's using the cloud, but the software itself
+      hasn't changed.
+    </p>
+    <div class="def native">
+      <b>Cloud native —</b> means the software was designed around the
+      cloud provider's own building blocks from the start, instead of
+      pretending it's still talking to one ordinary computer.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> The building block that makes it work: object storage</h2>
+    <p>
+      The clearest example is <b>object storage</b> — services like Amazon
+      S3, Azure Blob Storage, or Cloudflare R2. Compared to a normal
+      filesystem it can feel limited (it's mostly just "save this file,
+      read this file back"), but it comes with three things a single
+      machine's disk never could:
+    </p>
+    <ul>
+      <li>Your data is automatically spread across <b>many machines</b>, not one</li>
+      <li>If a machine or its disk fails, <b>no data is lost</b> — you never even notice</li>
+      <li>There's effectively <b>no size limit</b> — you're not capped by one disk's capacity</li>
+    </ul>
+    <p>
+      A cloud-native database <em>builds on top of</em> that, instead of
+      managing its own disks the way self-hosted software does. Snowflake,
+      for example, is a cloud data warehouse that actually stores its data
+      in S3 — and other services, in turn, get built on top of Snowflake.
+      It's layers all the way down.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Why cloud-native avoids virtual disks</h2>
+    <p>
+      Cloud providers also sell <b>virtual disks</b> — Amazon EBS, Azure
+      managed disks, GCP persistent disks — as an alternative to a VM's own
+      local disk (which disappears the moment that instance is resized or
+      fails). A virtual disk can be detached from one instance and
+      reattached to another. But it isn't actually a disk: it's a separate
+      service, run by its own set of machines, that <em>emulates</em> the
+      behavior of a disk (a "block device," working in fixed 4&nbsp;KiB
+      chunks) — purely so old, disk-based software can run in the cloud
+      unmodified.
+    </p>
+    <div class="def">
+      <b>The cost of pretending —</b> that emulation isn't free. It adds
+      overhead a purpose-built system wouldn't need, and because the
+      "disk" is really somewhere else on the network, every single
+      read/write becomes a network call — the whole system becomes
+      sensitive to ordinary network hiccups in a way a real local disk
+      never would be.
+    </div>
+    <p>
+      Cloud-native systems sidestep this by building on <b>dedicated
+      storage services</b> like S3 instead. S3 isn't pretending to be a
+      disk — it exposes its own simple "save this file, read it back" API,
+      purpose-built for storing large files long-term. No emulation, so
+      none of the emulation's cost.
+    </p>
+    <table>
+      <thead><tr><th>&nbsp;</th><th>Virtual disk (EBS, Azure managed disk)</th><th>Dedicated storage (S3)</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>What it pretends to be</td>
+          <td>A real disk — same block interface as physical hardware</td>
+          <td>Nothing else — its own file-based API</td>
+        </tr>
+        <tr>
+          <td>Unit of data</td>
+          <td>Fixed 4 KiB blocks</td>
+          <td>Whole files (hundreds of KB to several GB)</td>
+        </tr>
+        <tr>
+          <td>Why it exists</td>
+          <td>Lets old disk-based software run unmodified in the cloud</td>
+          <td>Built specifically for long-term storage of large files</td>
+        </tr>
+        <tr>
+          <td>The cost</td>
+          <td>Emulation overhead, and every I/O is a network call</td>
+          <td>None of that — it's not pretending to be a disk at all</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="caption">
+      Same underlying lesson as section 02: a cloud-native system gets its
+      advantages by using a service <em>designed</em> for the job, rather
+      than one that's just imitating an older piece of hardware.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Why that layering pays off</h2>
+    <p>
+      Each advantage traces back to one thing: a cloud-native system
+      inherits properties the lower-level cloud service already solved,
+      instead of solving them itself, badly, from scratch.
+    </p>
+    <table>
+      <thead><tr><th>Advantage</th><th>Why building on the cloud's own services gets you this</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Better performance, same hardware</td>
+          <td>You're riding on infrastructure the provider already spent years optimizing at huge scale — not reinventing it yourself, less efficiently.</td>
+        </tr>
+        <tr>
+          <td>Faster recovery from failures</td>
+          <td>The underlying storage already assumes machines fail constantly and handles that automatically. A traditional single-server system has to notice the failure and recover manually.</td>
+        </tr>
+        <tr>
+          <td>Scales quickly to match load</td>
+          <td>Storage and compute are separated — you can add or remove compute machines in minutes without physically moving any data.</td>
+        </tr>
+        <tr>
+          <td>Supports much larger datasets</td>
+          <td>Object storage has no real capacity ceiling, so you're not limited by how big a disk you can attach to one machine.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Same job, two very different builds</h2>
+    <p>
+      The book's Table 1-2 lines up well-known systems by whether they were
+      built the generic way or the cloud-native way, for the same two jobs
+      we've already met (OLTP = day-to-day operational lookups, OLAP =
+      big analytical queries):
+    </p>
+    <table>
+      <thead><tr><th>Category</th><th>Self-hosted (generic)</th><th>Cloud native</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Operational (OLTP)</td>
+          <td>MySQL, PostgreSQL, MongoDB</td>
+          <td>AWS Aurora, Azure SQL DB Hyperscale, Google Cloud Spanner</td>
+        </tr>
+        <tr>
+          <td>Analytical (OLAP)</td>
+          <td>Teradata, ClickHouse, Spark</td>
+          <td>Snowflake, Google BigQuery, Azure Synapse Analytics</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="caption">
+      Same category of job on both sides of each row — the difference
+      isn't <em>what</em> the system does, it's whether it was built to
+      exploit the cloud's own storage/compute-separation trick or not.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> No universal right answer, again</h2>
+    <p>
+      Higher-level, cloud-native services tend to be built for
+      <span class="highlight">particular use cases</span>. If your needs
+      match what one was designed for, using it will almost always be less
+      hassle than building the equivalent yourself on lower-level pieces.
+      If your needs don't match, you're back to the same build-vs-buy,
+      control-vs-convenience trade-off from the last note — just one layer
+      further up the stack.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>

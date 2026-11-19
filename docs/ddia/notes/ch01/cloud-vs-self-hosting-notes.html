@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud vs. Self-Hosting — Notes</title>
+<style>
+:host{ font-family:"Kalam","Comic Sans MS",cursive,sans-serif !important; font-size:23px !important; background-color:#FFFDF7 !important; background-image:linear-gradient(#E3EDF6 1px, transparent 1px) !important; background-size:100% 1.8rem !important; }
+:host h1, :host h2, :host h3, :host h4, :host h5, :host h6{ font-family:"Caveat","Comic Sans MS",cursive !important; font-weight:700 !important; letter-spacing:0.01em !important; }
+:host > div{ max-width:none !important; }
+
+  :host{
+    --paper:#EDEFE9;
+    --card:#F8F9F5;
+    --ink:#1B2420;
+    --ink-soft:#54615A;
+    --rule:#C9CFC5;
+    --onprem:#2F4858;
+    --onprem-soft:#DCE3E6;
+    --cloud:#B5502A;
+    --cloud-soft:#F1DFD1;
+    --gold:#B9862E;
+    --gold-soft:#F1E4C4;
+  }
+
+  *{box-sizing:border-box;}
+
+  :host{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{max-width:900px;margin:0 auto;padding:40px 32px 64px;}
+
+  .kicker{font-size:13px;letter-spacing:.02em;color:var(--ink-soft);margin:0 0 6px;}
+  h1{font-size:2.1rem;margin:0 0 10px;}
+  .lead{color:var(--ink-soft);font-size:1.05rem;max-width:66ch;margin:0 0 20px;}
+
+  .legend{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:24px;}
+  .swatch{display:inline-flex;align-items:center;gap:8px;font-size:14px;}
+  .swatch i{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .swatch.onprem i{background:var(--onprem);}
+  .swatch.cloud i{background:var(--cloud);}
+
+  hr{border:none;border-top:1px solid var(--rule);margin:28px 0;}
+
+  section{margin:32px 0;}
+  h2{display:flex;gap:12px;align-items:baseline;font-size:1.35rem;margin:0 0 10px;}
+  h2 .num{color:var(--ink-soft);font-size:.85rem;font-weight:normal;}
+
+  p{max-width:70ch;}
+  ul{max-width:68ch;padding-left:1.3rem;}
+  li{margin:6px 0;}
+
+  .def{
+    background:var(--card);border:1px solid var(--rule);border-left:4px solid var(--onprem);
+    border-radius:8px;padding:14px 18px;margin:14px 0;max-width:70ch;
+  }
+  .def.cloud{border-left-color:var(--cloud);}
+  .def.aside{border-left-color:var(--gold);}
+  .def b{color:var(--onprem);}
+  .def.cloud b{color:var(--cloud);}
+  .def.aside b{color:var(--gold);}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:.95rem;background:var(--card);border-radius:8px;overflow:hidden;}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--rule);vertical-align:top;}
+  thead th{background:var(--onprem-soft);color:var(--onprem);}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .highlight{background:linear-gradient(transparent 55%, var(--gold-soft) 55%);padding:0 .1em;}
+
+  .diagram{margin:18px 0;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:18px;}
+  .diagram svg{width:100%;height:auto;max-width:760px;display:block;margin:0 auto;}
+  .diagram-text{font-size:13px;}
+  .caption{color:var(--ink-soft);font-size:.9rem;margin-top:10px;max-width:70ch;}
+
+  @media (max-width:640px){
+    .wrap{padding:28px 18px 48px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="kicker">personal notes — infrastructure</p>
+  <h1>Cloud vs. Self-Hosting</h1>
+  <p class="lead">
+    Every data system eventually asks the same question: run it yourself,
+    or pay someone else to run it? From DDIA, Chapter 1
+    ("Cloud Versus Self-Hosting").
+  </p>
+
+  <div class="legend">
+    <span class="swatch onprem"><i></i> self-hosted (more control)</span>
+    <span class="swatch cloud"><i></i> cloud service (less control)</span>
+  </div>
+
+  <hr>
+
+  <section>
+    <h2><span class="num">01</span> It's really "build vs. buy"</h2>
+    <div class="def aside">
+      <b>The goal —</b> spend your limited time and money building the
+      things that actually make your product better, and pay someone else
+      for everything that's just routine plumbing.
+    </div>
+    <p>
+      A simple rule of thumb: if something is a <b>core part of what makes
+      your company special</b>, build and run it yourself. If it's routine
+      and every other company needs the same thing, buy it from someone who
+      specializes in it.
+    </p>
+    <p>
+      Extreme example from the book: almost no company makes its own CPUs —
+      it's far cheaper to buy them from a chip manufacturer, because making
+      chips isn't what makes those companies valuable.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> It's a spectrum, not a switch</h2>
+    <p>
+      "Cloud vs. self-hosted" sounds like two options. It's actually three,
+      and there's a smooth trade-off between them: how much of the stack —
+      the software itself, <em>and</em> who keeps it running — do you hand
+      over to someone else?
+    </p>
+    <div class="diagram">
+      <svg viewBox="0 0 760 175" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="cvs-a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+          <marker id="cvs-a2" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto">
+            <path d="M8,0 L2,3 L8,6 Z" fill="var(--ink-soft)"/>
+          </marker>
+        </defs>
+
+        <rect x="20" y="15" width="220" height="70" rx="6" fill="none" stroke="var(--onprem)" stroke-width="1.6"/>
+        <text x="130" y="37" text-anchor="middle" class="diagram-text" fill="var(--onprem)" font-weight="bold" font-size="13">In-house software,</text>
+        <text x="130" y="53" text-anchor="middle" class="diagram-text" fill="var(--onprem)" font-weight="bold" font-size="13">in-house operations</text>
+        <text x="130" y="70" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="11">e.g. your own application code</text>
+
+        <rect x="270" y="15" width="220" height="70" rx="6" fill="none" stroke="var(--ink)" stroke-width="1.3"/>
+        <text x="380" y="37" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-weight="bold" font-size="13">Off-the-shelf software,</text>
+        <text x="380" y="53" text-anchor="middle" class="diagram-text" fill="var(--ink)" font-weight="bold" font-size="13">in-house operations</text>
+        <text x="380" y="70" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="11">e.g. self-hosted database</text>
+
+        <rect x="520" y="15" width="220" height="70" rx="6" fill="none" stroke="var(--cloud)" stroke-width="1.6"/>
+        <text x="630" y="37" text-anchor="middle" class="diagram-text" fill="var(--cloud)" font-weight="bold" font-size="13">Off-the-shelf software,</text>
+        <text x="630" y="53" text-anchor="middle" class="diagram-text" fill="var(--cloud)" font-weight="bold" font-size="13">outsourced operations</text>
+        <text x="630" y="70" text-anchor="middle" class="diagram-text" fill="var(--ink-soft)" font-size="11">e.g. cloud services / SaaS</text>
+
+        <line x1="20" y1="115" x2="740" y2="115" stroke="var(--ink)" stroke-width="1.4" marker-end="url(#cvs-a1)" marker-start="url(#cvs-a2)"/>
+
+        <text x="20" y="140" class="diagram-text" fill="var(--onprem)" font-weight="bold" font-size="13">More control</text>
+        <text x="20" y="157" class="diagram-text" fill="var(--ink-soft)" font-size="12">greater investment</text>
+
+        <text x="740" y="140" text-anchor="end" class="diagram-text" fill="var(--cloud)" font-weight="bold" font-size="13">Less control</text>
+        <text x="740" y="157" text-anchor="end" class="diagram-text" fill="var(--ink-soft)" font-size="12">lower investment</text>
+      </svg>
+    </div>
+    <p class="caption">
+      The middle option is "self-hosting" — you take existing software
+      (open source or commercial) and run it yourself, rather than writing
+      it <em>or</em> handing the whole thing to a vendor.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> Self-hosting still splits in two</h2>
+    <p>Even "run it yourself" has two flavors, depending on whose hardware it runs on:</p>
+    <ul>
+      <li>
+        <b>On premises —</b> your own machines. (The book notes this name
+        sticks even when the server is actually sitting in a rented rack
+        in someone else's datacenter, not literally in your building.)
+      </li>
+      <li>
+        <b>IaaS (Infrastructure as a Service) —</b> a virtual machine
+        rented from a cloud provider — but <em>you</em> still install,
+        configure, and manage the software running on it. This is the
+        part that's easy to confuse with "using the cloud" in the SaaS
+        sense — renting the hardware isn't the same as handing over the
+        operations.
+      </li>
+    </ul>
+    <p>
+      A related question is <em>how</em> you deploy — e.g. using an
+      orchestration tool like Kubernetes to manage many machines at once —
+      but that's a tooling choice layered on top of this decision, not part
+      of it.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> When self-hosting actually wins</h2>
+    <div class="def">
+      <b>Self-hosting tends to be cheaper when —</b> your team already
+      knows how to run this kind of system, <em>and</em> your load is
+      predictable (you need roughly the same amount of computing power
+      every day, not wild swings).
+    </div>
+    <p>
+      If both are true, buying your own machines and running the software
+      yourself is often the cheaper option — you're not paying a cloud
+      provider's margin for something you already know how to do well.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> When the cloud actually wins</h2>
+    <div class="def cloud">
+      <b>The cloud tends to win when —</b> you don't already know how to
+      run the system yourself, <em>or</em> your load swings wildly rather
+      than staying steady.
+    </div>
+    <p>
+      Hiring and training people just to operate one system gets
+      expensive fast — adopting a cloud service can be quicker than
+      building that expertise in-house (though you still need an
+      operations team either way, just a smaller one).
+    </p>
+    <p>
+      <b>Variable load</b> is the sharper example. Say you run a big
+      analytical query: for a few minutes you need a lot of machines
+      working in parallel, then the query finishes and those machines sit
+      idle until the next one. If you own that hardware, you paid for
+      peak capacity you use only occasionally. A cloud provider lets you
+      hand those machines back the moment you're done — you only pay
+      while you're actually using them.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> The real price of the cloud: control</h2>
+    <p>
+      The biggest downside of a cloud service isn't money — it's that
+      <span class="highlight">you don't control it</span>. What that
+      actually means in practice:
+    </p>
+    <table>
+      <thead><tr><th>If this happens…</th><th>…here's what you can actually do</th></tr></thead>
+      <tbody>
+        <tr><td>It's missing a feature you need</td><td>Ask the vendor nicely. You can't build it in yourself.</td></tr>
+        <tr><td>It goes down</td><td>Wait. There's no server for you to go restart.</td></tr>
+        <tr><td>Something's slow or buggy</td><td>Hard to diagnose — you don't get the internal logs and metrics you'd have on your own machine.</td></tr>
+        <tr><td>The vendor raises prices or changes the product</td><td>You're stuck with it, or forced to migrate — switching is expensive since most cloud services don't share a common, swappable interface.</td></tr>
+        <tr><td>A political conflict involves the provider's country</td><td>You could be cut off entirely by sanctions.</td></tr>
+        <tr><td>You have strict privacy/security rules to follow</td><td>You now have to trust a third party to uphold them for you.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> In practice: hybrid, not all-or-nothing</h2>
+    <p>
+      Despite all of that, more and more new products get built on cloud
+      services, or mix the two — cloud for some parts, self-hosted for
+      others. But the cloud won't swallow everything:
+    </p>
+    <ul>
+      <li>Plenty of systems predate the cloud and were never rebuilt.</li>
+      <li>
+        Some needs are too specialized for any existing cloud service to
+        meet — e.g. high-frequency trading, where you need full physical
+        control over the hardware just to shave microseconds off latency.
+      </li>
+    </ul>
+    <p class="caption">
+      Same underlying lesson as the data warehouse/data lake note: there's
+      rarely one right answer for the whole system — the right call
+      depends on what you already know how to run, and how your specific
+      workload actually behaves.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>
