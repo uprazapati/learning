@@ -3,16 +3,211 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Learning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-  body{font-family:system-ui,sans-serif;max-width:640px;margin:15vh auto;padding:0 20px;color:#222}
-  a{color:#0b5cab}
+  :root{
+    color-scheme: light;
+    --bg:#fbfaff; --ink:#1d1b2e; --muted:#6b6880; --line:#e8e4f5;
+    --violet:#7c5cff; --pink:#ff6fb5; --amber:#ffb84d; --teal:#2ec4b6;
+    --card:#ffffffcc;
+  }
+  *{box-sizing:border-box;margin:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:Inter,system-ui,sans-serif; color:var(--ink); background:var(--bg);
+    min-height:100vh; overflow-x:hidden; position:relative;
+  }
+
+  /* ---------- animated background ---------- */
+  .bg{position:fixed; inset:0; z-index:-1; overflow:hidden;
+    background-image:radial-gradient(#d9d3f2 1px, transparent 1px); background-size:26px 26px;}
+  .blob{position:absolute; border-radius:50%; filter:blur(70px); opacity:.55; will-change:transform;}
+  .b1{width:46vw;height:46vw;left:-10vw;top:-12vw;background:var(--violet);animation:drift1 18s ease-in-out infinite alternate}
+  .b2{width:38vw;height:38vw;right:-8vw;top:8vh;background:var(--pink);animation:drift2 22s ease-in-out infinite alternate}
+  .b3{width:34vw;height:34vw;left:30vw;bottom:-14vw;background:var(--amber);animation:drift3 20s ease-in-out infinite alternate}
+  .b4{width:24vw;height:24vw;right:20vw;bottom:10vh;background:var(--teal);opacity:.4;animation:drift1 25s ease-in-out infinite alternate-reverse}
+  @keyframes drift1{to{transform:translate(8vw,6vh) scale(1.15)}}
+  @keyframes drift2{to{transform:translate(-9vw,10vh) scale(.9)}}
+  @keyframes drift3{to{transform:translate(-6vw,-9vh) scale(1.2)}}
+  .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(#fbfaffcc,#fbfaffee)}
+
+  /* ---------- hero ---------- */
+  .wrap{max-width:980px;margin:0 auto;padding:12vh 24px 10vh}
+  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;letter-spacing:.04em;
+    color:var(--violet);background:#fff;border:1px solid var(--line);padding:6px 14px;border-radius:999px;
+    box-shadow:0 4px 14px #7c5cff1a}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--teal);position:relative}
+  .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--teal);animation:ping 1.8s ease-out infinite}
+  @keyframes ping{to{transform:scale(3.2);opacity:0}}
+
+  h1{font-family:Caveat,cursive;font-weight:700;font-size:clamp(64px,13vw,132px);line-height:.95;margin:22px 0 10px;
+    background:linear-gradient(100deg,var(--violet),var(--pink),var(--amber),var(--violet));
+    background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:shine 8s linear infinite}
+  @keyframes shine{to{background-position:300% 0}}
+  .sub{font-size:clamp(18px,2.6vw,24px);color:var(--muted);min-height:1.6em}
+  .sub b{color:var(--ink);font-weight:600;border-right:2px solid var(--violet);padding-right:3px;animation:blink 1s steps(1) infinite}
+  @keyframes blink{50%{border-color:transparent}}
+
+  .section-title{display:flex;align-items:center;gap:12px;margin:64px 0 18px;font-size:14px;font-weight:700;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* ---------- cards ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+  .card{
+    --mx:50%;--my:50%;
+    position:relative;display:block;text-decoration:none;color:inherit;padding:28px;border-radius:22px;
+    background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
+    box-shadow:0 10px 30px #3a2f7a14;overflow:hidden;
+    transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s;
+    transform-style:preserve-3d;
+  }
+  .card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;
+    background:radial-gradient(380px circle at var(--mx) var(--my),#7c5cff26,transparent 60%)}
+  .card:hover{box-shadow:0 22px 50px #7c5cff30;border-color:#cfc5ff}
+  .card:hover::before{opacity:1}
+  .card:focus-visible{outline:3px solid var(--violet);outline-offset:3px}
+
+  .icon{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:28px;margin-bottom:18px;
+    background:linear-gradient(135deg,#ece6ff,#ffe3f1);box-shadow:inset 0 0 0 1px #fff;transition:transform .4s}
+  .card:hover .icon{transform:rotate(-8deg) scale(1.12)}
+  .card h2{font-size:22px;line-height:1.25;margin-bottom:8px}
+  .card p{color:var(--muted);font-size:15px;line-height:1.55}
+
+  .chapters{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:8px}
+  .chapters li{display:flex;align-items:center;gap:10px;font-size:14px;padding:10px 12px;border-radius:12px;
+    background:#f6f3ff;border:1px solid #ece6ff;transition:transform .2s,background .2s}
+  .card:hover .chapters li{background:#f0eaff}
+  .chapters li:hover{transform:translateX(6px)}
+  .chapters .n{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:700;
+    font-size:12px;color:#fff;background:linear-gradient(135deg,var(--violet),var(--pink))}
+  .chapters .t{flex:1;line-height:1.3}
+  .chapters .c{flex:none;font-size:12px;font-weight:600;color:var(--violet);background:#fff;border-radius:999px;padding:3px 9px}
+
+  .cta{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-weight:600;color:var(--violet)}
+  .cta svg{transition:transform .25s}
+  .card:hover .cta svg{transform:translateX(7px)}
+
+  .card.soon{border:2px dashed #d3cbf5;background:#ffffff80;box-shadow:none;display:grid;place-content:center;
+    text-align:center;min-height:240px;cursor:default}
+  .card.soon:hover{transform:none;box-shadow:none}
+  .plus{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;font-size:30px;
+    color:var(--violet);background:#fff;border:1px solid var(--line);animation:bob 3s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(-8px)}}
+
+  /* floating emojis */
+  .float{position:absolute;font-size:30px;opacity:.9;animation:floaty 6s ease-in-out infinite;pointer-events:none;user-select:none}
+  .f1{right:6%;top:16vh;animation-delay:0s}
+  .f2{right:20%;top:34vh;animation-delay:1.2s;font-size:24px}
+  .f3{left:4%;top:56vh;animation-delay:2.1s;font-size:26px}
+  @keyframes floaty{50%{transform:translateY(-18px) rotate(8deg)}}
+  @media (max-width:700px){.float{display:none}}
+
+  footer{margin-top:80px;text-align:center;color:var(--muted);font-size:13px}
+  footer a{color:var(--violet);text-decoration:none;font-weight:600}
+  footer a:hover{text-decoration:underline}
+
+  /* ---------- reveal on load/scroll ---------- */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}
+  }
 </style>
 </head>
 <body>
-<h1>Learning</h1>
-<ul>
-  <li><a href="ddia/">Designing Data-Intensive Applications: reading notes</a></li>
-</ul>
+<div class="bg" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+</div>
+<span class="float f1" aria-hidden="true">📚</span>
+<span class="float f2" aria-hidden="true">💡</span>
+<span class="float f3" aria-hidden="true">✏️</span>
+
+<main class="wrap">
+  <span class="eyebrow reveal"><span class="dot"></span>Always learning</span>
+  <h1 class="reveal">Learning</h1>
+  <p class="sub reveal">My notes on <b id="word">data systems</b></p>
+
+  <div class="section-title reveal">Notebooks</div>
+
+  <div class="grid">
+    <a class="card reveal" href="ddia/" aria-label="Open Designing Data-Intensive Applications notes">
+      <div class="icon">🗄️</div>
+      <h2>Designing Data-Intensive Applications</h2>
+      <p>Reading notes with diagrams and trade-offs, organized chapter by chapter.</p>
+      <ul class="chapters">
+        <li><span class="n">1</span><span class="t">Trade-offs in Data Systems Architecture</span><span class="c">6 notes</span></li>
+        <li><span class="n">2</span><span class="t">Defining Nonfunctional Requirements</span><span class="c">5 notes</span></li>
+      </ul>
+      <span class="cta">Open notebook
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <div class="card soon reveal">
+      <div>
+        <div class="plus">+</div>
+        <h2>Next notebook</h2>
+        <p>More topics land here as I learn them.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="reveal">
+    <a href="https://github.com/uprazapati/learning">View on GitHub</a>
+  </footer>
+</main>
+
+<script>
+  // Fade/slide elements in one after another
+  var items = document.querySelectorAll('.reveal');
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.15 });
+  items.forEach(function (el, i) { el.style.transitionDelay = (i * 90) + 'ms'; io.observe(el); });
+
+  // Spotlight + gentle 3D tilt that follows the mouse on cards
+  document.querySelectorAll('.card:not(.soon)').forEach(function (card) {
+    card.addEventListener('mousemove', function (e) {
+      var r = card.getBoundingClientRect();
+      var x = e.clientX - r.left, y = e.clientY - r.top;
+      card.style.setProperty('--mx', x + 'px');
+      card.style.setProperty('--my', y + 'px');
+      var rx = ((y / r.height) - .5) * -6, ry = ((x / r.width) - .5) * 6;
+      card.style.transform = 'perspective(900px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) translateY(-6px)';
+    });
+    card.addEventListener('mouseleave', function () { card.style.transform = ''; });
+  });
+
+  // Rotating typed word in the subtitle
+  var words = ['data systems', 'scalability', 'fault tolerance', 'trade-offs', 'distributed design'];
+  var el = document.getElementById('word'), wi = 0, ci = words[0].length, del = true;
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    setTimeout(function tick() {
+      if (del) { ci--; if (ci === 0) { del = false; wi = (wi + 1) % words.length; } }
+      else { ci++; if (ci === words[wi].length) { del = true; el.textContent = words[wi]; return setTimeout(tick, 1600); } }
+      el.textContent = words[wi].slice(0, ci) || ' ';
+      setTimeout(tick, del ? 35 : 70);
+    }, 2200);
+  }
+
+  // Blobs lean slightly away from the cursor
+  var blobs = document.querySelectorAll('.blob');
+  window.addEventListener('mousemove', function (e) {
+    var x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
+    blobs.forEach(function (b, i) {
+      b.style.translate = (x * (i + 1) * -18) + 'px ' + (y * (i + 1) * -18) + 'px';
+    });
+  });
+</script>
 </body>
 </html>
