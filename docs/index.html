@@ -26,7 +26,12 @@
   }
   html[data-theme="ocean"]   {--a1:#2f7bff;--a2:#22c1d6;--a3:#7c8cff;--a4:#5ee0b0}
   html[data-theme="sunset"]  {--a1:#ff7a45;--a2:#ff4f81;--a3:#ffc233;--a4:#b86bff}
+  /* nature greens */
   html[data-theme="forest"]  {--a1:#1f9d6b;--a2:#8bcf3f;--a3:#17b3a3;--a4:#f2b84b}
+  html[data-theme="meadow"]  {--a1:#3fae49;--a2:#a8d93f;--a3:#ffd94d;--a4:#6bd1c0}
+  html[data-theme="pine"]    {--a1:#146c4f;--a2:#2a9d8f;--a3:#7fb069;--a4:#c9a86a}
+  html[data-theme="moss"]    {--a1:#6b8e23;--a2:#b5c94a;--a3:#d4a373;--a4:#7fb685}
+  html[data-theme="sage"]    {--a1:#6f9a7f;--a2:#a8c3a0;--a3:#d9c9a3;--a4:#8fb8b0}
   html[data-theme="rose"]    {--a1:#e5487f;--a2:#ff8fab;--a3:#a855f7;--a4:#ffb347}
   html[data-theme="graphite"]{--a1:#475569;--a2:#94a3b8;--a3:#64748b;--a4:#cbd5e1}
 
@@ -56,17 +61,47 @@
   @keyframes drift3{to{transform:translate(-6vw,-9vh) scale(1.2)}}
   .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(color-mix(in srgb,var(--bg) 80%,transparent),color-mix(in srgb,var(--bg) 93%,transparent))}
 
-  /* ---------- decorative shapes ---------- */
-  .deco{position:absolute;pointer-events:none;user-select:none;animation:floaty 7s ease-in-out infinite}
-  .deco svg{display:block;width:100%;height:100%}
-  .d1{width:54px;height:54px;right:7%;top:15vh;color:var(--a2)}
-  .d2{width:70px;height:70px;right:19%;top:36vh;color:var(--a1);animation-name:floaty,spin;animation-duration:8s,40s;animation-delay:1s,0s;animation-timing-function:ease-in-out,linear}
-  .d3{width:44px;height:44px;left:3.5%;top:54vh;color:var(--a3);animation-delay:2s}
-  .d4{width:26px;height:26px;left:34%;top:11vh;color:var(--a1);animation-delay:.6s}
-  .d5{width:90px;height:90px;right:4%;top:62vh;color:var(--a4);animation-delay:3s}
-  @keyframes floaty{50%{transform:translateY(-16px)}}
-  @keyframes spin{to{rotate:360deg}}
-  @media (max-width:760px){.deco{display:none}}
+  /* ---------- orbit artwork (hero, right side) ---------- */
+  .orbit-wrap{display:grid;place-items:center;pointer-events:none;user-select:none}
+  .orbit{position:relative;width:380px;height:380px;transition:transform .25s ease-out;will-change:transform}
+  .orbit *{position:absolute}
+  .glow{inset:50px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--a1) 22%,transparent),transparent 68%);animation:breathe 6s ease-in-out infinite}
+  @keyframes breathe{50%{transform:scale(1.12);opacity:.75}}
+
+  /* radar sweep */
+  .sweep{inset:6px;border-radius:50%;animation:spin 7s linear infinite;
+    background:conic-gradient(from 0deg,transparent 0 292deg,color-mix(in srgb,var(--a1) 24%,transparent) 360deg);
+    -webkit-mask:radial-gradient(circle,transparent 0 17%,#000 18%);mask:radial-gradient(circle,transparent 0 17%,#000 18%)}
+
+  /* rings spin around the center; --rad is the ring radius */
+  .ring{--rad:70px;left:50%;top:50%;width:calc(var(--rad)*2);height:calc(var(--rad)*2);margin:calc(var(--rad)*-1) 0 0 calc(var(--rad)*-1);
+    border-radius:50%;border:1.5px solid color-mix(in srgb,var(--a1) 38%,transparent)}
+  .r1{--rad:70px;animation:spin 22s linear infinite}
+  .r2{--rad:118px;border-style:dashed;border-color:color-mix(in srgb,var(--a2) 55%,transparent);animation:spin 34s linear infinite reverse}
+  .r3{--rad:168px;border-style:dotted;border-width:2px;border-color:color-mix(in srgb,var(--a1) 45%,transparent);animation:spin 50s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* nodes sit on the ring at evenly spaced angles (--a) */
+  .orbit .n{left:50%;top:50%;width:14px;height:14px;margin:-7px;transform:rotate(var(--a)) translateY(calc(var(--rad)*-1))}
+  .orbit .n::before{content:"";position:absolute;inset:0}
+  .r1 .n::before{border-radius:50%;background:linear-gradient(135deg,var(--c,var(--a1)),var(--a2));box-shadow:0 0 14px color-mix(in srgb,var(--c,var(--a1)) 60%,transparent)}
+  .r2 .n::before{border-radius:4px;background:var(--c,var(--a3));transform:rotate(45deg);box-shadow:0 0 14px color-mix(in srgb,var(--c,var(--a3)) 55%,transparent)}
+  .r3 .n::before{border-radius:50%;background:#fff;border:2.5px solid var(--c,var(--a2));box-shadow:0 0 12px color-mix(in srgb,var(--c,var(--a2)) 45%,transparent)}
+  .r3 .n.s::before{background:var(--a4);border:0;inset:2px;box-shadow:0 0 10px color-mix(in srgb,var(--a4) 55%,transparent)}
+
+  /* core with expanding ripples */
+  .core{left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;
+    background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 10px 30px color-mix(in srgb,var(--a1) 45%,transparent);animation:pulse 3s ease-in-out infinite}
+  .core::before,.core::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--a1);animation:ripple 3s ease-out infinite}
+  .core::after{animation-delay:1.5s}
+  @keyframes pulse{50%{transform:scale(1.1)}}
+  @keyframes ripple{from{transform:scale(1);opacity:.6}to{transform:scale(3.4);opacity:0}}
+  .core svg{position:static;width:22px;height:22px;margin:12px;color:#fff;display:block}
+
+  @media (max-width:860px){
+    .orbit-wrap{display:block;position:relative;height:300px;margin-top:10px}
+    .orbit{position:absolute;left:50%;top:50%;margin:-190px 0 0 -190px;transform:scale(.78)}
+  }
 
   /* ---------- theme picker ---------- */
   .themes{position:fixed;top:18px;right:20px;z-index:20;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;
@@ -75,17 +110,21 @@
   @keyframes slideDown{from{opacity:0;transform:translateY(-18px)}}
   .themes-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;min-width:58px}
   .themes-label b{color:var(--a1-ink);font-weight:700}
-  .swatches{display:flex;gap:8px}
+  .swatches{display:flex;align-items:center;gap:8px}
+  .sw-sep{width:1px;height:18px;background:var(--line);margin:0 4px}
+  @media (max-width:900px){.themes{flex-wrap:wrap;justify-content:center;border-radius:22px;max-width:calc(100vw - 24px)}}
   .swatch{--s1:#7c5cff;--s2:#ff6fb5;width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;
     background:linear-gradient(135deg,var(--s1),var(--s2));box-shadow:0 0 0 1px var(--line);
     transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
   .swatch:hover{transform:scale(1.18)}
   .swatch:focus-visible{outline:3px solid var(--a1);outline-offset:3px}
   .swatch[aria-checked="true"]{box-shadow:0 0 0 2px var(--ink);transform:scale(1.1)}
-  @media (max-width:520px){.themes{right:50%;transform:translateX(50%);animation:none}.themes-label{display:none}.themes{padding-left:10px}}
+  @media (max-width:520px){.themes{left:12px;right:12px;top:12px;justify-content:center;padding:8px 12px;animation:none}.themes-label{display:none}.swatches{flex-wrap:wrap;justify-content:center;gap:6px}.swatch{width:24px;height:24px}}
 
   /* ---------- hero ---------- */
-  .wrap{max-width:980px;margin:0 auto;padding:13vh 24px 10vh}
+  .wrap{max-width:1040px;margin:0 auto;padding:12vh 24px 10vh}
+  .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:10px}
+  @media (max-width:860px){.hero{grid-template-columns:1fr}}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;letter-spacing:.04em;
     color:var(--a1-ink);background:#fff;border:1px solid var(--line);padding:6px 14px;border-radius:999px;
     box-shadow:0 4px 14px color-mix(in srgb,var(--a1) 12%,transparent)}
@@ -164,30 +203,57 @@
   <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
 </div>
 
-<!-- decorative shapes -->
-<span class="deco d1" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" opacity=".85"><path d="M12 1.5C12.7 7.6 16.4 11.3 22.5 12 16.4 12.7 12.7 16.4 12 22.5 11.3 16.4 7.6 12.7 1.5 12 7.6 11.3 11.3 7.6 12 1.5Z"/></svg></span>
-<span class="deco d2" aria-hidden="true"><svg viewBox="0 0 80 80" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".5"><circle cx="40" cy="40" r="30" stroke-dasharray="3 9"/><circle cx="40" cy="40" r="18"/></svg></span>
-<span class="deco d3" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round" opacity=".7"><rect x="9" y="9" width="30" height="30" rx="9" transform="rotate(18 24 24)"/></svg></span>
-<span class="deco d4" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" opacity=".55"><path d="M12 1.5C12.7 7.6 16.4 11.3 22.5 12 16.4 12.7 12.7 16.4 12 22.5 11.3 16.4 7.6 12.7 1.5 12 7.6 11.3 11.3 7.6 12 1.5Z"/></svg></span>
-<span class="deco d5" aria-hidden="true"><svg viewBox="0 0 90 90" fill="currentColor" opacity=".45"><circle cx="15" cy="15" r="3"/><circle cx="45" cy="15" r="3"/><circle cx="75" cy="15" r="3"/><circle cx="15" cy="45" r="3"/><circle cx="45" cy="45" r="3"/><circle cx="75" cy="45" r="3"/><circle cx="15" cy="75" r="3"/><circle cx="45" cy="75" r="3"/><circle cx="75" cy="75" r="3"/></svg></span>
-
 <!-- theme picker -->
 <div class="themes" role="radiogroup" aria-label="Color theme">
   <span class="themes-label">Theme <b id="themeName">Violet</b></span>
   <div class="swatches">
-    <button type="button" class="swatch" role="radio" data-theme="violet"   data-name="Violet"   aria-label="Violet theme"   title="Violet"   style="--s1:#7c5cff;--s2:#ff6fb5"></button>
-    <button type="button" class="swatch" role="radio" data-theme="ocean"    data-name="Ocean"    aria-label="Ocean theme"    title="Ocean"    style="--s1:#2f7bff;--s2:#22c1d6"></button>
-    <button type="button" class="swatch" role="radio" data-theme="sunset"   data-name="Sunset"   aria-label="Sunset theme"   title="Sunset"   style="--s1:#ff7a45;--s2:#ff4f81"></button>
-    <button type="button" class="swatch" role="radio" data-theme="forest"   data-name="Forest"   aria-label="Forest theme"   title="Forest"   style="--s1:#1f9d6b;--s2:#8bcf3f"></button>
-    <button type="button" class="swatch" role="radio" data-theme="rose"     data-name="Rose"     aria-label="Rose theme"     title="Rose"     style="--s1:#e5487f;--s2:#ff8fab"></button>
+    <button type="button" class="swatch" role="radio" data-theme="violet" data-name="Violet" aria-label="Violet theme" title="Violet" style="--s1:#7c5cff;--s2:#ff6fb5"></button>
+    <button type="button" class="swatch" role="radio" data-theme="ocean" data-name="Ocean" aria-label="Ocean theme" title="Ocean" style="--s1:#2f7bff;--s2:#22c1d6"></button>
+    <button type="button" class="swatch" role="radio" data-theme="sunset" data-name="Sunset" aria-label="Sunset theme" title="Sunset" style="--s1:#ff7a45;--s2:#ff4f81"></button>
+    <button type="button" class="swatch" role="radio" data-theme="rose" data-name="Rose" aria-label="Rose theme" title="Rose" style="--s1:#e5487f;--s2:#ff8fab"></button>
     <button type="button" class="swatch" role="radio" data-theme="graphite" data-name="Graphite" aria-label="Graphite theme" title="Graphite" style="--s1:#475569;--s2:#94a3b8"></button>
+    <span class="sw-sep" aria-hidden="true"></span>
+    <button type="button" class="swatch" role="radio" data-theme="forest" data-name="Forest" aria-label="Forest theme" title="Forest" style="--s1:#1f9d6b;--s2:#8bcf3f"></button>
+    <button type="button" class="swatch" role="radio" data-theme="meadow" data-name="Meadow" aria-label="Meadow theme" title="Meadow" style="--s1:#3fae49;--s2:#d6e84a"></button>
+    <button type="button" class="swatch" role="radio" data-theme="pine" data-name="Pine" aria-label="Pine theme" title="Pine" style="--s1:#146c4f;--s2:#2a9d8f"></button>
+    <button type="button" class="swatch" role="radio" data-theme="moss" data-name="Moss" aria-label="Moss theme" title="Moss" style="--s1:#6b8e23;--s2:#d4a373"></button>
+    <button type="button" class="swatch" role="radio" data-theme="sage" data-name="Sage" aria-label="Sage theme" title="Sage" style="--s1:#6f9a7f;--s2:#d9c9a3"></button>
   </div>
 </div>
 
 <main class="wrap">
-  <span class="eyebrow reveal"><span class="dot"></span>Always learning</span>
-  <h1 class="reveal">Learning</h1>
-  <p class="sub reveal">My notes on <b id="word">data systems</b></p>
+  <div class="hero">
+    <div class="hero-text">
+      <span class="eyebrow reveal"><span class="dot"></span>Always learning</span>
+      <h1 class="reveal">Learning</h1>
+      <p class="sub reveal">My notes on <b id="word">data systems</b></p>
+    </div>
+
+    <div class="orbit-wrap reveal" aria-hidden="true">
+      <div class="orbit" id="orbit">
+        <div class="glow"></div>
+        <div class="sweep"></div>
+        <div class="ring r3">
+          <i class="n" style="--a:0deg"></i><i class="n s" style="--a:45deg"></i>
+          <i class="n" style="--a:90deg"></i><i class="n s" style="--a:135deg"></i>
+          <i class="n" style="--a:180deg"></i><i class="n s" style="--a:225deg"></i>
+          <i class="n" style="--a:270deg"></i><i class="n s" style="--a:315deg"></i>
+        </div>
+        <div class="ring r2">
+          <i class="n" style="--a:0deg;--c:var(--a3)"></i>
+          <i class="n" style="--a:120deg;--c:var(--a4)"></i>
+          <i class="n" style="--a:240deg;--c:var(--a1)"></i>
+        </div>
+        <div class="ring r1">
+          <i class="n" style="--a:0deg"></i>
+          <i class="n" style="--a:180deg;--c:var(--a2)"></i>
+        </div>
+        <div class="core">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 8 12 13 3 8Z"/><path d="M3 12.5 12 17.5 21 12.5"/><path d="M3 17 12 22 21 17"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="section-title reveal">Notebooks</div>
 
@@ -287,6 +353,15 @@
       setTimeout(tick, del ? 35 : 70);
     }, 2200);
   }
+
+  // ---- Orbit artwork tilts gently toward the cursor (desktop only) ----
+  var orbit = document.getElementById('orbit');
+  var wide = window.matchMedia('(min-width: 861px)');
+  window.addEventListener('mousemove', function (e) {
+    if (!wide.matches) { orbit.style.transform = ''; return; }
+    var x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
+    orbit.style.transform = 'perspective(900px) rotateY(' + (x * 16) + 'deg) rotateX(' + (y * -16) + 'deg)';
+  });
 
   // ---- Blobs lean slightly away from the cursor ----
   var blobs = document.querySelectorAll('.blob');
