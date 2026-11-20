@@ -88,10 +88,15 @@
   .chev svg{width:14px;height:14px}
   .note.expanded .chev{transform:rotate(90deg);background:var(--tint2)}
 
-  .note-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.8,.2,1)}
-  .note.expanded .note-wrap{grid-template-rows:1fr}
-  .note-inner{overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s linear .45s}
-  .note.expanded .note-inner{visibility:visible;transition-delay:0s}
+  .note{scroll-margin-top:76px}
+  .note.expanded .note-toggle{position:sticky;top:68px;z-index:6}
+  .note-wrap{display:none;height:0;overflow:hidden;transition:height .45s cubic-bezier(.2,.8,.2,1)}
+  .note-close{display:flex;align-items:center;justify-content:center;gap:8px;margin:14px auto 4px;padding:9px 18px;border-radius:999px;cursor:pointer;
+    font:inherit;font-size:14px;font-weight:600;color:var(--a1-ink);background:var(--solid);border:1px solid var(--line);
+    transition:transform .2s,box-shadow .2s,background .2s}
+  .note-close:hover{background:var(--tint2);transform:translateY(-2px);box-shadow:0 8px 20px color-mix(in srgb,var(--a1) 20%,transparent)}
+  .note-close:focus-visible{outline:3px solid var(--a1);outline-offset:3px}
+  .note-close svg{width:14px;height:14px}
   .note-host{margin:12px 2px 6px;border-radius:18px;overflow:hidden;border:1px solid var(--line);
     box-shadow:0 18px 44px color-mix(in srgb,var(--a1) 14%,transparent);
     /* the notes read these; outer values override each note's own :host defaults */
@@ -186,28 +191,48 @@
 
   // ---- Build the page from notes.json ----
   var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  var UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>';
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
   function loadNote(host, file) {
-    if (host.dataset.loaded) return;
-    host.dataset.loaded = '1';
+    if (host._p) return host._p;
     host.innerHTML = '<div class="state">Loading...</div>';
-    fetch(file).then(function (r) { if (!r.ok) throw 0; return r.text(); }).then(function (html) {
+    host._p = fetch(file).then(function (r) { if (!r.ok) throw 0; return r.text(); }).then(function (html) {
       host.innerHTML = '';
       var root = host.attachShadow ? host.attachShadow({ mode: 'open' }) : host;
       root.innerHTML = html;
-    }).catch(function () { host.dataset.loaded = ''; host.innerHTML = '<div class="state">Could not load this note. Please try again.</div>'; });
+      host.dataset.ready = '1';
+    }).catch(function () { host._p = null; host.innerHTML = '<div class="state">Could not load this note. Please try again.</div>'; });
+    return host._p;
   }
 
   function showChapter(ci) {
     document.querySelectorAll('.chapter-link').forEach(function (l) { l.classList.toggle('active', l.dataset.chapter === String(ci)); });
     document.querySelectorAll('.chapter-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.chapter === String(ci)); });
   }
+  // Opening and closing use explicit heights, so a closed note is always fully hidden.
   function setExpanded(section, on) {
+    var wrap = section.querySelector('.note-wrap'), host = section.querySelector('.note-host'), btn = section.querySelector('.note-toggle');
+    section._open = on;
+    clearTimeout(wrap._t);
     section.classList.toggle('expanded', on);
-    var btn = section.querySelector('.note-toggle');
     btn.setAttribute('aria-expanded', String(on));
-    if (on) loadNote(section.querySelector('.note-host'), section.dataset.file);
+    if (on) {
+      wrap.style.display = 'block';
+      if (!host.dataset.ready) wrap.style.height = 'auto';      // show "Loading..." at its natural size
+      loadNote(host, section.dataset.file).then(function () {
+        if (!section._open) return;                                // closed again while loading
+        wrap.style.height = wrap.offsetHeight + 'px';
+        void wrap.offsetHeight;
+        wrap.style.height = wrap.scrollHeight + 'px';
+        wrap._t = setTimeout(function () { wrap.style.height = 'auto'; }, 520);
+      });
+    } else {
+      wrap.style.height = wrap.offsetHeight + 'px';
+      void wrap.offsetHeight;
+      wrap.style.height = '0px';
+      wrap._t = setTimeout(function () { wrap.style.display = 'none'; }, 520);
+    }
   }
 
   fetch('notes.json').then(function (r) { return r.json(); }).then(function (data) {
@@ -230,7 +255,8 @@
           '<button type="button" class="note-toggle" aria-expanded="false" aria-controls="wrap' + gi + '">' +
           '<span class="note-num">' + (ni + 1) + '</span><span class="note-label">' + esc(n.title) + '</span>' +
           '<span class="chev">' + CHEV + '</span></button>' +
-          '<div class="note-wrap" id="wrap' + gi + '"><div class="note-inner"><div class="note-host"></div></div></div></section>';
+          '<div class="note-wrap" id="wrap' + gi + '"><div class="note-inner"><div class="note-host"></div>' +
+          '<button type="button" class="note-close">' + UP + 'Collapse note</button></div></div></section>';
         gi++;
       });
       panels += '</section>';
@@ -250,6 +276,14 @@
         var on = !section.classList.contains('expanded');
         setExpanded(section, on);
         if (on && history.replaceState) history.replaceState(null, '', '#' + section.id);
+      });
+    });
+
+    document.querySelectorAll('.note-close').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var section = b.closest('.note');
+        setExpanded(section, false);
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
 
