@@ -37,6 +37,7 @@ html[data-theme="sage"]    {--a1:#6f9a7f;--a2:#a8c3a0;--a3:#d9c9a3;--a4:#8fb8b0}
   --topbar:color-mix(in srgb,var(--surf) calc(var(--k-top) * (1 - var(--t) * .8)),transparent);
   --card-soft:color-mix(in srgb,var(--surf) calc(var(--k-soft) * (1 - var(--t) * .8)),transparent);
   --pill:color-mix(in srgb,var(--surf) 88%,transparent);
+  --k-side:85%; --side-blur:14px;
   --solid:#fff;
   --glow:#ffffffaa; --rule-soft:#ffffffb0; --swatch-ring:#fff;
   --title-filter:drop-shadow(0 2px 0 #ffffffcc) drop-shadow(0 6px 22px #ffffff99);
@@ -164,6 +165,7 @@ html[data-theme="galaxy"]{
   --bg:#03040a;--line:#ffffff24;--tint:#ffffff0f;--tint2:#ffffff1a;
   --surf:#0b0e1c;--k-card:70%;--k-strong:85%;--k-top:65%;--k-soft:40%;--solid:#ffffff17;
   --glow:#000000b3;--rule-soft:#ffffff2e;--swatch-ring:#1b1f33;--title-filter:none;
+  --k-side:30%;--side-blur:4px;
   --title-grad:linear-gradient(100deg,#ffb27a,#ffe2b8,#a6edf2,#4fd1e6,#ffb27a);
   --icon-bg:linear-gradient(135deg,#ff8a3d40,#4fd1e640);
 }

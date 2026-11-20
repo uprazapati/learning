@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Source+Serif+4:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="../assets/shared.css?v=9">
+<link rel="stylesheet" href="../assets/shared.css?v=10">
 <script src="../assets/shared.js?v=6"></script>
 <style>
   /* ---------- layout: collapsible sidebar + content ---------- */
@@ -18,7 +18,7 @@
   .sidebar{position:sticky;top:0;height:100vh;align-self:start;overflow:hidden;min-width:0;z-index:30}
   .sb-inner{width:310px;height:100%;padding:16px 8px 16px 16px;transition:opacity .25s}
   .app.collapsed .sb-inner{opacity:0}
-  .sb-card{height:100%;display:flex;flex-direction:column;border-radius:22px;background:var(--glass-strong);backdrop-filter:blur(calc(14px - var(--t) * 8px));
+  .sb-card{height:100%;display:flex;flex-direction:column;border-radius:22px;background:color-mix(in srgb,var(--surf) calc(var(--k-side) * (1 - var(--t) * .8)),transparent);backdrop-filter:blur(calc(var(--side-blur) - var(--t) * 3px));
     border:1px solid var(--line);box-shadow:0 14px 40px color-mix(in srgb,var(--a1) 14%,transparent);overflow:hidden}
   .sb-head{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 10px 20px}
   .sb-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}

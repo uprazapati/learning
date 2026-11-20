@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/shared.css?v=9">
+<link rel="stylesheet" href="assets/shared.css?v=10">
 <script src="assets/shared.js?v=6"></script>
 <style>
   .wrap{max-width:1040px;margin:0 auto;padding:13vh 24px 10vh}
@@ -36,7 +36,7 @@
     letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-shadow:0 1px 10px var(--glow)}
   .section-title::after{content:"";flex:1;height:1px;background:var(--rule-soft)}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,560px));justify-content:center;gap:22px}
   .card{--mx:50%;--my:50%;position:relative;display:block;text-decoration:none;color:inherit;padding:28px;border-radius:22px;
     background:var(--card);backdrop-filter:blur(calc(12px - var(--t) * 8px));border:1px solid var(--line);
     box-shadow:0 10px 30px color-mix(in srgb,var(--a1) 9%,transparent);overflow:hidden;
@@ -68,12 +68,6 @@
   .cta svg{transition:transform .25s}
   .card:hover .cta svg{transform:translateX(7px)}
 
-  .card.soon{border:2px dashed color-mix(in srgb,var(--a1) 30%,white);background:var(--card-soft);box-shadow:none;display:grid;place-content:center;
-    text-align:center;min-height:240px;cursor:default}
-  .card.soon:hover{transform:none;box-shadow:none}
-  .plus{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
-    color:var(--a1);background:var(--solid);border:1px solid var(--line);animation:bob 3s ease-in-out infinite}
-  .plus svg{width:24px;height:24px}
 
   footer{margin-top:80px;text-align:center;color:var(--ink);font-size:13px;text-shadow:0 1px 10px var(--glow)}
   footer a{color:var(--a1-ink);text-decoration:none;font-weight:600}
@@ -112,14 +106,6 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </span>
     </a>
-
-    <div class="card soon reveal">
-      <div>
-        <div class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div>
-        <h2>Next notebook</h2>
-        <p>More topics land here as I learn them.</p>
-      </div>
-    </div>
   </div>
 
   <footer class="reveal">
@@ -138,7 +124,7 @@
   items.forEach(function (el, i) { el.style.transitionDelay = (i * 90) + 'ms'; io.observe(el); });
 
   // Spotlight + gentle 3D tilt that follows the mouse on cards
-  document.querySelectorAll('.card:not(.soon)').forEach(function (card) {
+  document.querySelectorAll('.card').forEach(function (card) {
     card.addEventListener('mousemove', function (e) {
       var r = card.getBoundingClientRect();
       var x = e.clientX - r.left, y = e.clientY - r.top;

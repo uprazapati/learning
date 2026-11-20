@@ -176,7 +176,7 @@
     var U = {}; ['uT', 'uTilt', 'uRoll', 'uR', 'uDpr', 'uYaw', 'uRes', 'uCenter', 'uC1', 'uC2'].forEach(function (n) { U[n] = gl.getUniformLocation(prog, n); });
 
     function g() { return (Math.random() + Math.random() + Math.random() - 1.5) / 1.5; }
-    var N = Math.min(window.innerWidth, 1600) < 700 ? 60000 : 140000;
+    var N = Math.min(window.innerWidth, 1600) < 700 ? 70000 : 180000;
     var A = new Float32Array(N * 4), B = new Float32Array(N * 4);
     for (var i = 0; i < N; i++) {
       var kind = Math.random(), r, th, z;
@@ -206,7 +206,7 @@
         canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr); gl.viewport(0, 0, canvas.width, canvas.height);
       },
       draw: function (t, mx, my, sy, c1, c2) {
-        var R = Math.min(W * .62, Math.max(W * .36, H * .34));
+        var R = Math.min(W * .9, Math.max(W * .52, H * .5));
         gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT);
         gl.uniform1f(U.uT, t / 1000); gl.uniform1f(U.uTilt, 1.0 + (my - .5) * .2); gl.uniform1f(U.uRoll, -.14 + (mx - .5) * .1);
         gl.uniform1f(U.uYaw, (mx - .5) * .3 + sy * .0005); gl.uniform1f(U.uR, R); gl.uniform1f(U.uDpr, dpr);
