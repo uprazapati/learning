@@ -258,28 +258,31 @@
       return cs.getPropertyValue('--a' + (i + 1)).trim() || '#7c5cff';
     }
     function smooth(a, b, x) { var u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
-    // white sticks on a staggered grid; every stick travels in a small circle, and the circles
-    // are out of step by distance from the middle, so rings of motion ripple outward
+    // White vertical sticks sit on concentric elliptical rings around an empty middle.
+    // Every ring orbits the middle; neighbouring rings turn in opposite directions and
+    // outer rings turn more slowly, so the sticks are always moving in circles.
     function drawSticks(t) {
       var sec = reduce ? 0 : t / 1000, scroll = window.pageYOffset || 0;
-      var colSp = Math.min(96, Math.max(58, W / 17)), rowSp = colSp * .68, len = rowSp * .82, lw = Math.max(2.2, colSp * .042);
-      var ox = W / 2 + (cx - .5) * 40, oy = H * .5 + (cy - .5) * 30 - scroll * .12;
+      var ringSp = Math.min(88, Math.max(56, W / 16)), stickSp = ringSp * .7, len = ringSp * .62, lw = Math.max(2.4, ringSp * .045);
+      var ox = W / 2 + (cx - .5) * 40, oy = H * .5 + (cy - .5) * 30 - scroll * .12, FLAT = .7;
       var mxp = cx * W, myp = cy * H;
-      var hole = Math.min(W, H) * .17 * (1 + .1 * Math.sin(sec * .9));
+      var hole = Math.min(W, H) * .17 * (1 + .08 * Math.sin(sec * .9));
+      var maxR = Math.sqrt(Math.pow(W / 2 + 90, 2) + Math.pow((H / 2 + 90) / FLAT, 2));
       ctx.strokeStyle = '#ffffff'; ctx.lineWidth = lw; ctx.lineCap = 'butt';
-      var rows = Math.ceil(H / rowSp) + 3, cols = Math.ceil(W / colSp) + 3;
-      for (var j = -1; j < rows; j++) {
-        for (var i = -1; i < cols; i++) {
-          var x0 = i * colSp + ((j & 1) ? colSp / 2 : 0), y0 = j * rowSp;
-          var dx = x0 - ox, dy = (y0 - oy) / .7, r = Math.sqrt(dx * dx + dy * dy) + .001;
-          var phi = r * .043 - sec * 1.7;
-          var amp = 8 + 3 * Math.sin(r * .006 - sec * .6);
-          var push = 34 * Math.sin(r * .043 - sec * 1.7);
-          var x = x0 + Math.cos(phi) * amp + dx / r * push, y = y0 + Math.sin(phi) * amp * .7 + dy / r * push * .7;
+      for (var k = 0, r0 = hole * .8; r0 + k * ringSp < maxR; k++) {
+        var r = (r0 + k * ringSp) * (1 + .025 * Math.sin(sec * .8 + k * .6));    // rings breathe a little
+        var a = smooth(hole * .7, hole * 1.3, r);
+        if (a <= .02) continue;
+        var perim = 2 * Math.PI * Math.sqrt((r * r + r * FLAT * r * FLAT) / 2);
+        var n = Math.max(7, Math.round(perim / stickSp));
+        var speed = (k % 2 ? -1 : 1) * 46 / (r * .85);                          // about 46 px/s along every ring
+        var base = k * 1.31 + sec * speed;
+        for (var i = 0; i < n; i++) {
+          var th = base + i * 6.2832 / n;
+          var x = ox + Math.cos(th) * r, y = oy + Math.sin(th) * r * FLAT;
+          if (x < -60 || x > W + 60 || y < -60 || y > H + 60) continue;
           var mdx = x - mxp, mdy = y - myp, md = Math.sqrt(mdx * mdx + mdy * mdy);
           if (md < 150) { var f = 1 - md / 150; x += mdx / (md + 1) * f * 46; y += mdy / (md + 1) * f * 46; }
-          var a = smooth(hole * .75, hole * 1.35, r);
-          if (a <= .02) continue;
           ctx.globalAlpha = .92 * a;
           ctx.beginPath(); ctx.moveTo(x, y - len / 2); ctx.lineTo(x, y + len / 2); ctx.stroke();
         }
