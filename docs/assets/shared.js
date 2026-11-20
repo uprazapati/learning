@@ -27,6 +27,14 @@
   function ring(k, dur, cls, nodes) {
     return '<div class="ring ' + cls + '" style="--k:' + k + ';--dur:' + dur + 's">' + nodes + '</div>';
   }
+  function belt() {
+    var h = '';
+    for (var i = 0; i < 90; i++) {
+      var a = Math.round(Math.random() * 360), sz = 2 + Math.round(Math.random() * 4);
+      h += '<i class="n" style="--a:' + a + 'deg"><b class="pl rock" style="--sz:' + sz + 'px;--c:' + (i % 3 ? 'var(--a1)' : 'var(--a3)') + '"></b></i>';
+    }
+    return h;
+  }
   function cosmosHtml() {
     return '<div class="cosmos" id="cosmos"><div class="sun"></div>' +
       ring(0.11, 46, '', planet(25, 16, 'var(--a2)')) +
@@ -34,7 +42,8 @@
       ring(0.27, 118, '', planet(300, 38, 'var(--a1)', 'sat') + planet(60, 18, 'var(--a4)') + planet(175, 12, 'var(--a2)')) +
       ring(0.37, 170, 'dots rev', planet(10, 46, 'var(--a4)') + planet(130, 14, 'var(--a3)', 'hollow') +
            planet(190, 20, 'var(--a2)') + planet(250, 14, 'var(--a1)', 'hollow')) +
-      ring(0.49, 240, 'dash', planet(95, 62, 'var(--a1)', 'sat') + planet(275, 30, 'var(--a3)')) +
+      ring(0.43, 330, 'belt', belt()) +
+      ring(0.49, 240, 'dash', planet(95, 62, 'var(--a1)', 'sat banded') + planet(275, 30, 'var(--a3)', 'banded')) +
       '</div>';
   }
   function buildSpace() {
@@ -42,6 +51,7 @@
     s.className = 'space';
     s.setAttribute('aria-hidden', 'true');
     s.innerHTML = '<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>' +
+      '<div class="galaxy g1"></div><div class="galaxy g2"></div><div class="giant"></div><div class="lune"></div>' +
       cosmosHtml() + '<canvas id="stars"></canvas><div class="veil"></div>';
     document.body.insertBefore(s, document.body.firstChild);
   }
@@ -99,7 +109,7 @@
     var canvas = document.getElementById('stars');
     var cosmos = document.getElementById('cosmos');
     var ctx = canvas.getContext('2d');
-    var W, H, dpr, stars = [], shoot = null, nextShoot = 3000;
+    var W, H, dpr, stars = [], shoot = null, nextShoot = 1500;
     var mx = .5, my = .5, cx = .5, cy = .5, cs = getComputedStyle(root);
 
     function resize() {
@@ -115,44 +125,48 @@
         // a faint Milky Way: part of the stars gather along a diagonal band
         var y = band ? .78 - x * .55 + gauss() * .1 : Math.random();
         stars.push({ x: x, y: Math.min(1, Math.max(0, y)), z: z, r: (band ? .4 : .55) + z * 1.5, p: Math.random() * 6.28,
-                     sp: .6 + Math.random() * 1.6, c: Math.floor(Math.random() * 5), sp4: !band && Math.random() < .1 });
+                     sp: .6 + Math.random() * 1.6, c: (function (r) { return r < .52 ? 4 : r < .88 ? Math.floor(Math.random() * 4) : 5; })(Math.random()), sp4: !band && Math.random() < .14 });
       }
     }
     function col(i) {
-      if (i === 4) return '#1d1b2e';
+      if (i === 4) return '#ffffff';
+      if (i === 5) return '#2a2540';
       return cs.getPropertyValue('--a' + (i + 1)).trim() || '#7c5cff';
     }
     function draw(t) {
       ctx.clearRect(0, 0, W, H);
       var sy = window.pageYOffset || 0;
       var ox = (cx - .5) * 34, oy = (cy - .5) * 34;
-      var colors = [col(0), col(1), col(2), col(3), col(4)];
+      var colors = [col(0), col(1), col(2), col(3), col(4), col(5)];
       for (var i = 0; i < stars.length; i++) {
         var s = stars[i];
         var x = (s.x * W + ox * s.z + W) % W;
         var y = ((s.y * H + oy * s.z - sy * .09 * s.z) % H + H) % H;
         var tw = reduce ? 1 : (.55 + .45 * Math.sin(t / 1000 * s.sp + s.p));
-        ctx.globalAlpha = (s.c === 4 ? .4 : .85) * tw * (.55 + s.z * .45);
+        ctx.globalAlpha = (s.c === 4 ? .98 : s.c === 5 ? .3 : .85) * tw * (.55 + s.z * .45);
         ctx.fillStyle = colors[s.c]; ctx.strokeStyle = colors[s.c];
         if (s.sp4) {
-          var L = s.r * 4.2; ctx.lineWidth = .9;
+          var L = s.r * 5.5; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(x - L, y); ctx.lineTo(x + L, y); ctx.moveTo(x, y - L); ctx.lineTo(x, y + L); ctx.stroke();
         }
+        if (s.c === 4 && s.r > 1.2) { ctx.shadowBlur = 10; ctx.shadowColor = '#ffffff'; }
         ctx.beginPath(); ctx.arc(x, y, s.r, 0, 6.283); ctx.fill();
+        ctx.shadowBlur = 0;
       }
       // constellations
-      var cc = colors[0];
+      var cc = '#ffffff';
       CONSTELLATIONS.forEach(function (pts) {
         ctx.strokeStyle = cc; ctx.fillStyle = cc; ctx.lineWidth = 1;
-        ctx.globalAlpha = .32; ctx.beginPath();
+        ctx.globalAlpha = .55; ctx.beginPath();
         pts.forEach(function (p, k) {
           var px = p[0] * W + ox * .6, py = p[1] * H + oy * .6 - sy * .05;
           if (k) ctx.lineTo(px, py); else ctx.moveTo(px, py);
         });
-        ctx.stroke(); ctx.globalAlpha = .75;
+        ctx.stroke(); ctx.globalAlpha = .95; ctx.shadowBlur = 10; ctx.shadowColor = '#ffffff';
         pts.forEach(function (p) {
-          ctx.beginPath(); ctx.arc(p[0] * W + ox * .6, p[1] * H + oy * .6 - sy * .05, 2, 0, 6.283); ctx.fill();
+          ctx.beginPath(); ctx.arc(p[0] * W + ox * .6, p[1] * H + oy * .6 - sy * .05, 2.6, 0, 6.283); ctx.fill();
         });
+        ctx.shadowBlur = 0;
       });
       // shooting star
       if (!reduce) {
@@ -161,13 +175,14 @@
         }
         if (shoot) {
           shoot.x += shoot.vx; shoot.y += shoot.vy; shoot.life++;
-          var tail = 110, mag = Math.hypot(shoot.vx, shoot.vy);
+          var tail = 190, mag = Math.hypot(shoot.vx, shoot.vy);
           var g = ctx.createLinearGradient(shoot.x, shoot.y, shoot.x - shoot.vx / mag * tail, shoot.y - shoot.vy / mag * tail);
-          g.addColorStop(0, colors[1]); g.addColorStop(1, 'rgba(255,255,255,0)');
-          ctx.globalAlpha = .85; ctx.strokeStyle = g; ctx.lineWidth = 2;
+          g.addColorStop(0, '#ffffff'); g.addColorStop(.3, colors[1]); g.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.globalAlpha = .95; ctx.strokeStyle = g; ctx.lineWidth = 2.6;
           ctx.beginPath(); ctx.moveTo(shoot.x, shoot.y);
           ctx.lineTo(shoot.x - shoot.vx / mag * tail, shoot.y - shoot.vy / mag * tail); ctx.stroke();
-          if (shoot.y > H + 40 || shoot.x < -140) { shoot = null; nextShoot = t + 5000 + Math.random() * 6000; }
+          ctx.shadowBlur = 14; ctx.shadowColor = '#ffffff'; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(shoot.x, shoot.y, 2.6, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+          if (shoot.y > H + 40 || shoot.x < -140) { shoot = null; nextShoot = t + 2500 + Math.random() * 4500; }
         }
       }
       ctx.globalAlpha = 1;

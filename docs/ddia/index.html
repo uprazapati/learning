@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Source+Serif+4:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="../assets/shared.css?v=3">
-<script src="../assets/shared.js?v=3"></script>
+<link rel="stylesheet" href="../assets/shared.css?v=4">
+<script src="../assets/shared.js?v=4"></script>
 <style>
   /* ---------- layout: collapsible sidebar + content ---------- */
   .app{--sbw:310px;display:grid;grid-template-columns:var(--sbw) minmax(0,1fr);min-height:100vh;
@@ -48,18 +48,19 @@
 
   .content{min-width:0}
   .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:12px 20px;
-    background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-  .crumbs{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+    background:#ffffff66;backdrop-filter:blur(12px);border-bottom:1px solid #ffffffa0}
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink)}
   .crumbs a{color:var(--a1-ink);font-weight:600;text-decoration:none}
   .crumbs a:hover{text-decoration:underline}
   .crumbs b{color:var(--ink);font-weight:600}
 
   .page{max-width:920px;margin:0 auto;padding:36px 28px 90px}
   .head h1{font-family:Caveat,cursive;font-weight:700;font-size:clamp(44px,6.4vw,76px);line-height:1;margin:0 0 8px;
-    background:linear-gradient(100deg,var(--a1),var(--a2),var(--a3),var(--a1));background-size:300% 100%;
-    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 8s linear infinite}
+    background:linear-gradient(100deg,var(--a1-ink),var(--a1),var(--a2),var(--a1-ink));background-size:300% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 8s linear infinite;
+    filter:drop-shadow(0 2px 0 #ffffffcc) drop-shadow(0 6px 22px #ffffff99)}
   @keyframes shine{to{background-position:300% 0}}
-  .head p{color:var(--muted);font-size:17px}
+  .head p{color:color-mix(in srgb,var(--ink) 78%,transparent);font-size:17px;text-shadow:0 1px 12px #ffffffaa}
   .head .by{margin-top:4px;font-size:14px}
 
   /* ---------- chapters and notes ---------- */

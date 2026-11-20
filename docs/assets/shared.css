@@ -37,8 +37,12 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 
 /* ---------- space background ---------- */
 .space{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
-  background-image:radial-gradient(color-mix(in srgb,var(--a1) 18%,white) 1px,transparent 1px);background-size:30px 30px}
-.space .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;will-change:transform}
+  background:
+    radial-gradient(120% 75% at 50% -5%,color-mix(in srgb,var(--a1) 46%,white) 0,transparent 62%),
+    radial-gradient(85% 70% at 105% 100%,color-mix(in srgb,var(--a2) 40%,white) 0,transparent 62%),
+    radial-gradient(75% 60% at -5% 105%,color-mix(in srgb,var(--a4) 34%,white) 0,transparent 62%),
+    color-mix(in srgb,var(--a1) 14%,white)}
+.space .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;will-change:transform}
 .space .b1{width:48vw;height:48vw;left:-12vw;top:-14vw;background:var(--a1);animation:drift1 20s ease-in-out infinite alternate}
 .space .b2{width:40vw;height:40vw;right:-10vw;top:6vh;background:var(--a2);animation:drift2 24s ease-in-out infinite alternate}
 .space .b3{width:36vw;height:36vw;left:28vw;bottom:-16vw;background:var(--a3);animation:drift3 22s ease-in-out infinite alternate}
@@ -46,14 +50,14 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 @keyframes drift1{to{transform:translate(8vw,6vh) scale(1.15)}}
 @keyframes drift2{to{transform:translate(-9vw,10vh) scale(.9)}}
 @keyframes drift3{to{transform:translate(-6vw,-9vh) scale(1.2)}}
-.space .veil{position:absolute;inset:0;background:linear-gradient(color-mix(in srgb,var(--bg) 22%,transparent),color-mix(in srgb,var(--bg) 46%,transparent))}
+.space .veil{position:absolute;inset:0;background:linear-gradient(transparent 40%,color-mix(in srgb,var(--bg) 38%,transparent))}
 .space canvas{position:absolute;inset:0;width:100%;height:100%}
 
 /* big orbiting solar system, centered behind the page */
 .cosmos{--s:max(100vw,100vh);position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);
   margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);will-change:transform}
 .cosmos *{position:absolute}
-.cosmos .sun{left:50%;top:50%;width:calc(var(--s)*.13);height:calc(var(--s)*.13);margin:calc(var(--s)*-.065);border-radius:50%;
+.cosmos .sun{left:50%;top:50%;width:calc(var(--s)*.2);height:calc(var(--s)*.2);margin:calc(var(--s)*-.1);border-radius:50%;
   background:radial-gradient(circle,color-mix(in srgb,var(--a3) 65%,white) 0,color-mix(in srgb,var(--a3) 30%,transparent) 30%,transparent 70%);
   animation:breathe 8s ease-in-out infinite}
 .cosmos .sun::after{content:"";left:36%;top:36%;width:28%;height:28%;border-radius:50%;
@@ -63,20 +67,23 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 
 .cosmos .ring{--rad:calc(var(--s)*var(--k));left:50%;top:50%;width:calc(var(--rad)*2);height:calc(var(--rad)*2);
   margin:calc(var(--rad)*-1) 0 0 calc(var(--rad)*-1);border-radius:50%;
-  border:1.5px solid color-mix(in srgb,var(--a1) 34%,transparent);animation:spin var(--dur) linear infinite}
-.cosmos .ring.dash{border-style:dashed;border-color:color-mix(in srgb,var(--a2) 48%,transparent)}
-.cosmos .ring.dots{border-style:dotted;border-width:2px;border-color:color-mix(in srgb,var(--a1) 42%,transparent)}
+  border:1.5px solid #ffffff99;box-shadow:0 0 22px color-mix(in srgb,var(--a1) 30%,transparent),inset 0 0 22px color-mix(in srgb,var(--a1) 18%,transparent);animation:spin var(--dur) linear infinite}
+.cosmos .ring.dash{border-style:dashed;border-color:#ffffffb3}
+.cosmos .ring.dots{border-style:dotted;border-width:2.5px;border-color:#ffffffd9}
+.cosmos .ring.belt{border:0;box-shadow:none}
 .cosmos .ring.rev{animation-direction:reverse}
 
 .cosmos .n{left:50%;top:50%;width:0;height:0;transform:rotate(var(--a)) translateY(calc(var(--rad)*-1))}
 .cosmos .pl{left:calc(var(--sz)/-2);top:calc(var(--sz)/-2);width:var(--sz);height:var(--sz);border-radius:50%;
   rotate:calc(var(--a)*-1);animation:spin var(--dur) linear infinite reverse;
   background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--c) 28%,#fff) 0,var(--c) 52%,color-mix(in srgb,var(--c) 68%,#2a2540) 100%);
-  box-shadow:0 0 calc(var(--sz)*.9) color-mix(in srgb,var(--c) 32%,transparent);opacity:.92}
+  box-shadow:0 0 calc(var(--sz)*1.1) color-mix(in srgb,var(--c) 45%,transparent),inset -4px -6px 14px #2a254055;opacity:1}
 .cosmos .ring.rev .pl{animation-direction:normal}
 .cosmos .pl.sat::after{content:"";left:-55%;top:32%;width:210%;height:36%;border-radius:50%;rotate:-18deg;
   border:max(2px,calc(var(--sz)*.07)) solid color-mix(in srgb,var(--c) 50%,transparent)}
-.cosmos .pl.hollow{background:transparent;box-shadow:none;border:2px solid color-mix(in srgb,var(--c) 70%,transparent);opacity:.8}
+.cosmos .pl.hollow{background:transparent;box-shadow:none;border:2px solid #fffffff0;opacity:.9}
+.cosmos .pl.rock{background:color-mix(in srgb,var(--c) 55%,#fff);box-shadow:0 0 6px #ffffffa0;opacity:.9}
+.cosmos .pl.banded::before{content:"";inset:0;border-radius:50%;background:repeating-linear-gradient(12deg,#ffffff47 0 7%,transparent 7% 15%)}
 .cosmos .moon{inset:-75%;border-radius:50%;border:1px dashed color-mix(in srgb,var(--a1) 30%,transparent);animation:spin 11s linear infinite}
 .cosmos .moon::after{content:"";left:50%;top:0;width:calc(var(--sz)*.3);height:calc(var(--sz)*.3);margin:calc(var(--sz)*-.15) 0 0 calc(var(--sz)*-.15);
   border-radius:50%;background:var(--a1);box-shadow:0 0 12px color-mix(in srgb,var(--a1) 60%,transparent)}
@@ -111,3 +118,26 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
   *,*::before,*::after{animation:none!important;transition:none!important}
   .reveal{opacity:1;transform:none}
 }
+
+/* ---------- big space scenery ---------- */
+.space .galaxy{position:absolute;border-radius:50%;filter:blur(10px);animation:spin 150s linear infinite;
+  background:conic-gradient(from 0deg,transparent 0 5%,color-mix(in srgb,var(--a2) 85%,#fff) 12%,transparent 26%,transparent 50%,color-mix(in srgb,var(--a1) 80%,#fff) 62%,transparent 78%);
+  -webkit-mask:radial-gradient(circle,#000 0,#000 8%,transparent 66%);mask:radial-gradient(circle,#000 0,#000 8%,transparent 66%);opacity:.8}
+.space .galaxy::after{content:"";position:absolute;left:38%;top:38%;width:24%;height:24%;border-radius:50%;
+  background:radial-gradient(circle,#fff 0,#ffffffb0 25%,transparent 70%)}
+.space .g1{width:78vmin;height:78vmin;right:-24vmin;bottom:-20vmin}
+.space .g2{width:46vmin;height:46vmin;left:-12vmin;top:-10vmin;animation-direction:reverse;animation-duration:110s;opacity:.65}
+
+.space .giant{position:absolute;left:-9vmin;bottom:14vh;width:34vmin;height:34vmin;border-radius:50%;
+  background:repeating-linear-gradient(10deg,#ffffff40 0 6%,transparent 6% 14%),
+    radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--a3) 35%,#fff) 0,var(--a3) 52%,color-mix(in srgb,var(--a3) 62%,#2a2540) 100%);
+  box-shadow:0 0 70px color-mix(in srgb,var(--a3) 50%,transparent),inset -18px -22px 50px #2a254066;animation:floaty 15s ease-in-out infinite}
+.space .giant::after{content:"";position:absolute;left:-48%;top:30%;width:196%;height:40%;border-radius:50%;rotate:-16deg;
+  border:clamp(6px,1.4vmin,16px) solid #ffffffaa;box-shadow:0 0 0 clamp(4px,.9vmin,10px) color-mix(in srgb,var(--a3) 30%,transparent),0 0 40px #ffffff80}
+.space .lune{position:absolute;right:8vw;top:11vh;width:13vmin;height:13vmin;border-radius:50%;
+  background:radial-gradient(circle at 30% 35%,#00000014 0 9%,transparent 10%),radial-gradient(circle at 62% 28%,#00000012 0 6%,transparent 7%),
+    radial-gradient(circle at 55% 66%,#00000014 0 11%,transparent 12%),radial-gradient(circle at 22% 70%,#0000000f 0 5%,transparent 6%),
+    radial-gradient(circle at 32% 28%,#fff,color-mix(in srgb,var(--a1) 14%,#e9e6f5) 60%,color-mix(in srgb,var(--a1) 40%,#8a85a8));
+  box-shadow:0 0 50px #ffffffb0,inset -8px -10px 22px #2a254044;animation:floaty 11s ease-in-out infinite 1.5s}
+@keyframes floaty{50%{transform:translateY(-14px)}}
+@media (max-width:700px){.space .giant{left:-14vmin;bottom:6vh;width:42vmin;height:42vmin}.space .lune{right:4vw;top:15vh;width:16vmin;height:16vmin}}
