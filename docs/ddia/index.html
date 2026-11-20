@@ -1,120 +1,266 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="violet">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>Designing Data-Intensive Applications</title>
-<style>
-:root{ --brand:#0176D3; --brand-dark:#014486; --brand-light:#D8EDFF;
-         --canvas:#F3F3F3; --surface:#FFFFFF; --ink:#181818; --ink-soft:#747474; --rule:#C9C9C9; }
-  *{box-sizing:border-box;}
-  body{ margin:0; color:var(--ink); background:var(--canvas);
-        font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .layout{ display:flex; min-height:100vh; align-items:flex-start; border-top:3px solid var(--brand); }
-  .sidebar{ width:240px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--rule);
-            padding:20px 8px; position:sticky; top:0; height:100vh; overflow-y:auto; }
-  .sidebar-title{ font-size:12px; color:var(--ink-soft); margin:0 0 8px; padding:0 12px; }
-  .chapter-nav{ display:flex; flex-direction:column; gap:1px; }
-  .chapter-link{ display:flex; justify-content:space-between; align-items:center; gap:8px;
-                 width:100%; text-align:left; font:inherit; font-size:14px; padding:9px 12px;
-                 border:none; border-left:3px solid transparent; background:none; color:var(--ink); cursor:pointer; }
-  .chapter-link:hover{ background:var(--canvas); }
-  .chapter-link.active{ background:var(--brand-light); border-left-color:var(--brand); color:var(--brand-dark); font-weight:bold; }
-  .chapter-count{ font-size:11px; color:var(--ink-soft); }
-  .chapter-link.active .chapter-count{ color:var(--brand-dark); }
-  .chapter-name{ font-weight:600; line-height:1.35; }
-  .content{ flex:1; min-width:0; }
-  header{ padding:36px 32px; background:linear-gradient(135deg, var(--brand-dark), var(--brand)); color:#fff; }
-  header h1{ margin:0 0 6px; font-size:clamp(24px,3vw,32px); font-weight:700; }
-  header p{ margin:0; color:rgba(255,255,255,.85); font-size:15px; }
-  header .byline{ margin-top:4px; font-size:13px; color:rgba(255,255,255,.7); }
-  main{ max-width:1280px; margin:0 auto; padding:40px 32px; }
-  .chapter-panel{ display:none; }
-  .chapter-panel.active{ display:block; }
-  .note{ margin-bottom:28px; }
-  .note-title{ font-size:20px; margin:0; }
-  .note-toggle{ display:flex; align-items:center; justify-content:space-between; gap:12px;
-                width:100%; text-align:left; font:inherit; font-size:inherit;
-                padding:10px 14px; margin:0; border:1px solid var(--rule); border-radius:.25rem;
-                background:var(--surface); color:var(--ink); cursor:pointer; }
-  .note-toggle:hover{ border-color:var(--brand); color:var(--brand-dark); }
-  .note-toggle-label{ font-size:18px; font-weight:600; }
-  .note-chevron{ flex-shrink:0; display:flex; transition:transform 0.25s ease; color:var(--ink-soft); }
-  .note.expanded .note-chevron{ transform:rotate(90deg); }
-  .note-host-wrap{ max-height:0; overflow:hidden; opacity:0;
-                    transition:max-height 0.35s ease, opacity 0.3s ease; }
-  .note.expanded .note-host-wrap{ opacity:1; }
-  .note-host{ margin:14px 6px 6px; border-radius:2px; overflow:hidden; border-left:4px solid var(--brand);
-              transform:rotate(-0.35deg); box-shadow:0 6px 16px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08); }
-  .empty, .nav-empty{ color:var(--ink-soft); font-size:14px; }
-  @media (max-width:720px){
-    .layout{ flex-direction:column; }
-    .sidebar{ width:auto; position:static; height:auto; border-right:none; border-bottom:1px solid var(--rule); }
-  }
-</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=Kalam:wght@300;400;700&family=Source+Serif+4:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Source+Serif+4:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../assets/shared.css?v=3">
+<script src="../assets/shared.js?v=3"></script>
+<style>
+  /* ---------- layout: collapsible sidebar + content ---------- */
+  .app{--sbw:310px;display:grid;grid-template-columns:var(--sbw) minmax(0,1fr);min-height:100vh;
+    transition:grid-template-columns .4s cubic-bezier(.2,.8,.2,1)}
+  .app.collapsed{--sbw:0px}
+  .sidebar{position:sticky;top:0;height:100vh;align-self:start;overflow:hidden;min-width:0;z-index:30}
+  .sb-inner{width:310px;height:100%;padding:16px 8px 16px 16px;transition:opacity .25s}
+  .app.collapsed .sb-inner{opacity:0}
+  .sb-card{height:100%;display:flex;flex-direction:column;border-radius:22px;background:#ffffffd9;backdrop-filter:blur(14px);
+    border:1px solid var(--line);box-shadow:0 14px 40px color-mix(in srgb,var(--a1) 14%,transparent);overflow:hidden}
+  .sb-head{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 10px 20px}
+  .sb-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .icon-btn{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:#fff;
+    color:var(--a1-ink);cursor:pointer;transition:transform .2s,box-shadow .2s,background .2s}
+  .icon-btn:hover{background:var(--tint);box-shadow:0 6px 16px color-mix(in srgb,var(--a1) 20%,transparent)}
+  .icon-btn:active{transform:scale(.92)}
+  .icon-btn:focus-visible{outline:3px solid var(--a1);outline-offset:2px}
+  .icon-btn svg{width:18px;height:18px;transition:transform .35s}
+  .app.collapsed #sbToggle svg{transform:scaleX(-1)}
+
+  .chapter-nav{display:flex;flex-direction:column;gap:8px;padding:6px 12px;overflow-y:auto;flex:1}
+  .chapter-link{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;padding:12px;border-radius:16px;cursor:pointer;
+    border:1px solid transparent;background:transparent;color:var(--ink);transition:background .2s,transform .2s,border-color .2s,box-shadow .2s}
+  .chapter-link:hover{background:var(--tint);transform:translateX(4px)}
+  .chapter-link:focus-visible{outline:3px solid var(--a1);outline-offset:2px}
+  .chapter-link.active{background:var(--tint2);border-color:color-mix(in srgb,var(--a1) 30%,white);
+    box-shadow:0 8px 22px color-mix(in srgb,var(--a1) 14%,transparent)}
+  .chapter-link .num{flex:none;width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;
+    background:linear-gradient(135deg,var(--a1),var(--a2))}
+  .chapter-link .name{flex:1;font-size:14px;font-weight:600;line-height:1.3}
+  .chapter-link .count{flex:none;font-size:12px;font-weight:600;color:var(--a1-ink);background:#fff;border-radius:999px;padding:3px 9px}
+  .home-link{display:flex;align-items:center;gap:8px;margin:8px 12px 14px;padding:11px 14px;border-radius:14px;text-decoration:none;
+    font-size:14px;font-weight:600;color:var(--a1-ink);background:var(--tint);transition:background .2s,transform .2s}
+  .home-link:hover{background:var(--tint2);transform:translateX(-3px)}
+  .home-link svg{width:16px;height:16px}
+
+  .content{min-width:0}
+  .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:12px 20px;
+    background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .crumbs{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+  .crumbs a{color:var(--a1-ink);font-weight:600;text-decoration:none}
+  .crumbs a:hover{text-decoration:underline}
+  .crumbs b{color:var(--ink);font-weight:600}
+
+  .page{max-width:920px;margin:0 auto;padding:36px 28px 90px}
+  .head h1{font-family:Caveat,cursive;font-weight:700;font-size:clamp(44px,6.4vw,76px);line-height:1;margin:0 0 8px;
+    background:linear-gradient(100deg,var(--a1),var(--a2),var(--a3),var(--a1));background-size:300% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 8s linear infinite}
+  @keyframes shine{to{background-position:300% 0}}
+  .head p{color:var(--muted);font-size:17px}
+  .head .by{margin-top:4px;font-size:14px}
+
+  /* ---------- chapters and notes ---------- */
+  .chapter-panel{display:none}
+  .chapter-panel.active{display:block;animation:rise .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}}
+  .chapter-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin:34px 0 16px}
+  .kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--a1-ink);
+    background:var(--tint2);border-radius:999px;padding:4px 12px}
+  .chapter-head h2{font-size:clamp(20px,3vw,26px);line-height:1.25}
+  .note{margin-bottom:14px}
+  .note-toggle{display:flex;align-items:center;gap:14px;width:100%;text-align:left;font:inherit;padding:16px 18px;cursor:pointer;
+    border-radius:18px;border:1px solid var(--line);background:var(--card);backdrop-filter:blur(10px);color:var(--ink);
+    box-shadow:0 8px 24px color-mix(in srgb,var(--a1) 8%,transparent);
+    transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s}
+  .note-toggle:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--a1) 38%,white);
+    box-shadow:0 18px 40px color-mix(in srgb,var(--a1) 18%,transparent)}
+  .note-toggle:focus-visible{outline:3px solid var(--a1);outline-offset:3px}
+  .note.expanded .note-toggle{border-color:color-mix(in srgb,var(--a1) 45%,white)}
+  .note-num{flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:700;font-size:14px;color:#fff;
+    background:linear-gradient(135deg,var(--a1),var(--a2));transition:transform .35s}
+  .note-toggle:hover .note-num{transform:rotate(-8deg) scale(1.08)}
+  .note-label{flex:1;font-size:18px;font-weight:600;line-height:1.3}
+  .chev{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--tint);color:var(--a1-ink);transition:transform .35s,background .2s}
+  .chev svg{width:14px;height:14px}
+  .note.expanded .chev{transform:rotate(90deg);background:var(--tint2)}
+
+  .note-wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.8,.2,1)}
+  .note.expanded .note-wrap{grid-template-rows:1fr}
+  .note-inner{overflow:hidden;min-height:0;visibility:hidden;transition:visibility 0s linear .45s}
+  .note.expanded .note-inner{visibility:visible;transition-delay:0s}
+  .note-host{margin:12px 2px 6px;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+    box-shadow:0 18px 44px color-mix(in srgb,var(--a1) 14%,transparent);
+    /* the notes read these; outer values override each note's own :host defaults */
+    --note-paper:color-mix(in srgb,var(--a1) 4%,#fffdf8);
+    --note-rule:color-mix(in srgb,var(--a1) 13%,#fff);
+    --note-heading:var(--a1-ink);
+    --paper:var(--note-paper);--card:#fff;--ink:#1d1b2e;--ink-soft:#6b6880;
+    --rule:color-mix(in srgb,var(--a1) 20%,#fff);--grid:color-mix(in srgb,var(--a1) 10%,#fff);--code-bg:color-mix(in srgb,var(--a1) 7%,#fff)}
+  .state{color:var(--muted);padding:26px;text-align:center;font-size:14px}
+
+  /* ---------- small screens: sidebar becomes a drawer ---------- */
+  .backdrop{display:none}
+  @media (max-width:860px){
+    .app{grid-template-columns:minmax(0,1fr)}
+    .sidebar{position:fixed;left:0;top:0;width:min(310px,88vw);transform:translateX(0);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+    .sb-inner{width:100%}
+    .app.collapsed .sidebar{transform:translateX(-105%)}
+    .app.collapsed .sb-inner{opacity:1}
+    .backdrop{display:block;position:fixed;inset:0;z-index:25;background:#1d1b2e44;backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .3s}
+    .app:not(.collapsed) ~ .backdrop{opacity:1;pointer-events:auto}
+    .page{padding:26px 16px 80px}
+  }
+  @media (max-width:520px){.content{padding-top:92px}}
+</style>
 </head>
 <body>
-<div class="layout">
-  <aside class="sidebar">
-    <p class="sidebar-title">Chapters</p>
-    <nav class="chapter-nav"><button type="button" class="chapter-link active" data-chapter="0"><span class="chapter-name">Chapter 1. Trade-offs in Data Systems Architecture</span><span class="chapter-count">6</span></button><button type="button" class="chapter-link" data-chapter="1"><span class="chapter-name">Chapter 2. Defining Nonfunctional Requirements</span><span class="chapter-count">5</span></button></nav>
+<div class="app collapsed" id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Chapters">
+    <div class="sb-inner">
+      <div class="sb-card">
+        <div class="sb-head">
+          <span class="sb-title">Chapters</span>
+          <button type="button" class="icon-btn" id="sbClose" aria-label="Collapse sidebar" title="Collapse sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+        </div>
+        <nav class="chapter-nav" id="chapterNav" aria-label="Chapter list"></nav>
+        <a class="home-link" href="../">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+          All notebooks
+        </a>
+      </div>
+    </div>
   </aside>
-  <div class="content">
-    <header>
-      <h1>Designing Data-Intensive Applications</h1>
-      <p>Personal reading notes, organized by chapter.</p>
-      <p class="byline">by Ujjwal Prazapati</p>
-    </header>
-    <main><div class="chapter-panel active" data-chapter="0"><section class="note" id="note-0"><h2 class="note-title"><button type="button" class="note-toggle" data-note="0"><span class="note-toggle-label">pinot-vs-traditional-olap-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-0"><div class="note-host" id="host-0"></div></div></section><section class="note" id="note-1"><h2 class="note-title"><button type="button" class="note-toggle" data-note="1"><span class="note-toggle-label">data-warehouse-vs-data-lake-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-1"><div class="note-host" id="host-1"></div></div></section><section class="note" id="note-2"><h2 class="note-title"><button type="button" class="note-toggle" data-note="2"><span class="note-toggle-label">cloud-vs-self-hosting-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-2"><div class="note-host" id="host-2"></div></div></section><section class="note" id="note-3"><h2 class="note-title"><button type="button" class="note-toggle" data-note="3"><span class="note-toggle-label">cloud-native-architecture-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-3"><div class="note-host" id="host-3"></div></div></section><section class="note" id="note-4"><h2 class="note-title"><button type="button" class="note-toggle" data-note="4"><span class="note-toggle-label">microservices-and-serverless-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-4"><div class="note-host" id="host-4"></div></div></section><section class="note" id="note-5"><h2 class="note-title"><button type="button" class="note-toggle" data-note="5"><span class="note-toggle-label">cloud-vs-supercomputing-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-5"><div class="note-host" id="host-5"></div></div></section></div><div class="chapter-panel" data-chapter="1"><section class="note" id="note-6"><h2 class="note-title"><button type="button" class="note-toggle" data-note="6"><span class="note-toggle-label">social-network-home-timelines-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-6"><div class="note-host" id="host-6"></div></div></section><section class="note" id="note-7"><h2 class="note-title"><button type="button" class="note-toggle" data-note="7"><span class="note-toggle-label">describing-performance-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-7"><div class="note-host" id="host-7"></div></div></section><section class="note" id="note-8"><h2 class="note-title"><button type="button" class="note-toggle" data-note="8"><span class="note-toggle-label">response-time-metrics-and-fault-tolerance-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-8"><div class="note-host" id="host-8"></div></div></section><section class="note" id="note-9"><h2 class="note-title"><button type="button" class="note-toggle" data-note="9"><span class="note-toggle-label">redundancy-software-faults-and-humans-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-9"><div class="note-host" id="host-9"></div></div></section><section class="note" id="note-10"><h2 class="note-title"><button type="button" class="note-toggle" data-note="10"><span class="note-toggle-label">scalability-notes</span><span class="note-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></h2><div class="note-host-wrap" id="wrap-10"><div class="note-host" id="host-10"></div></div></section></div></main>
-  </div>
-</div>
-<script>
-  var NOTES = {
-  "0": "notes/ch01/pinot-vs-traditional-olap-notes.html",
-  "1": "notes/ch01/data-warehouse-vs-data-lake-notes.html",
-  "2": "notes/ch01/cloud-vs-self-hosting-notes.html",
-  "3": "notes/ch01/cloud-native-architecture-notes.html",
-  "4": "notes/ch01/microservices-and-serverless-notes.html",
-  "5": "notes/ch01/cloud-vs-supercomputing-notes.html",
-  "6": "notes/ch02/social-network-home-timelines-notes.html",
-  "7": "notes/ch02/describing-performance-notes.html",
-  "8": "notes/ch02/response-time-metrics-and-fault-tolerance-notes.html",
-  "9": "notes/ch02/redundancy-software-faults-and-humans-notes.html",
-  "10": "notes/ch02/scalability-notes.html"
-};
-  Promise.all(Object.keys(NOTES).map(function (i) {
-    return fetch(NOTES[i]).then(function (r) { return r.text(); }).then(function (html) {
-      var host = document.getElementById("host-" + i);
-      if (!host) return;
-      var root = host.attachShadow ? host.attachShadow({ mode: "open" }) : host;
-      root.innerHTML = html;
-    });
-  }));
 
-  var chapterLinks = Array.prototype.slice.call(document.querySelectorAll(".chapter-link"));
-  var chapterPanels = Array.prototype.slice.call(document.querySelectorAll(".chapter-panel"));
-  chapterLinks.forEach(function (link) {
-    link.addEventListener("click", function () {
-      var target = link.getAttribute("data-chapter");
-      chapterLinks.forEach(function (l) { l.classList.toggle("active", l === link); });
-      chapterPanels.forEach(function (p) {
-        p.classList.toggle("active", p.getAttribute("data-chapter") === target);
+  <div class="content">
+    <div class="topbar">
+      <button type="button" class="icon-btn" id="sbToggle" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle chapters sidebar" title="Toggle sidebar ( [ )">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M9 4v16"/><path d="M15.5 10l-2 2 2 2"/></svg>
+      </button>
+      <div class="crumbs"><a href="../">Learning</a><span aria-hidden="true">/</span><b>DDIA</b></div>
+    </div>
+    <div class="page">
+      <header class="head">
+        <h1 id="bookTitle">Designing Data-Intensive Applications</h1>
+        <p id="bookSub"></p>
+        <p class="by" id="bookBy"></p>
+      </header>
+      <main id="panels"><div class="state">Loading notes...</div></main>
+    </div>
+  </div>
+  <div class="backdrop" id="backdrop"></div>
+</div>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  var app = $('app'), sidebar = $('sidebar'), toggleBtn = $('sbToggle');
+  var mobile = window.matchMedia('(max-width: 860px)');
+
+  // ---- Sidebar open / close ----
+  function setCollapsed(c, persist) {
+    app.classList.toggle('collapsed', c);
+    toggleBtn.setAttribute('aria-expanded', String(!c));
+    sidebar.inert = c;
+    if (persist && !mobile.matches) { try { localStorage.setItem('ddia-sidebar', c ? 'closed' : 'open'); } catch (e) {} }
+  }
+  function initSidebar() {
+    var saved = null; try { saved = localStorage.getItem('ddia-sidebar'); } catch (e) {}
+    setCollapsed(mobile.matches ? true : saved === 'closed', false);
+  }
+  toggleBtn.addEventListener('click', function () { setCollapsed(!app.classList.contains('collapsed'), true); });
+  $('sbClose').addEventListener('click', function () { setCollapsed(true, true); toggleBtn.focus(); });
+  $('backdrop').addEventListener('click', function () { setCollapsed(true, false); });
+  document.addEventListener('keydown', function (e) {
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+    if (e.key === '[') setCollapsed(!app.classList.contains('collapsed'), true);
+    if (e.key === 'Escape' && mobile.matches) setCollapsed(true, false);
+  });
+  (mobile.addEventListener ? mobile.addEventListener('change', initSidebar) : mobile.addListener(initSidebar));
+  initSidebar();
+
+  // ---- Build the page from notes.json ----
+  var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function loadNote(host, file) {
+    if (host.dataset.loaded) return;
+    host.dataset.loaded = '1';
+    host.innerHTML = '<div class="state">Loading...</div>';
+    fetch(file).then(function (r) { if (!r.ok) throw 0; return r.text(); }).then(function (html) {
+      host.innerHTML = '';
+      var root = host.attachShadow ? host.attachShadow({ mode: 'open' }) : host;
+      root.innerHTML = html;
+    }).catch(function () { host.dataset.loaded = ''; host.innerHTML = '<div class="state">Could not load this note. Please try again.</div>'; });
+  }
+
+  function showChapter(ci) {
+    document.querySelectorAll('.chapter-link').forEach(function (l) { l.classList.toggle('active', l.dataset.chapter === String(ci)); });
+    document.querySelectorAll('.chapter-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.chapter === String(ci)); });
+  }
+  function setExpanded(section, on) {
+    section.classList.toggle('expanded', on);
+    var btn = section.querySelector('.note-toggle');
+    btn.setAttribute('aria-expanded', String(on));
+    if (on) loadNote(section.querySelector('.note-host'), section.dataset.file);
+  }
+
+  fetch('notes.json').then(function (r) { return r.json(); }).then(function (data) {
+    $('bookTitle').textContent = data.title;
+    $('bookSub').textContent = data.subtitle || '';
+    $('bookBy').textContent = data.byline || '';
+    document.title = data.title;
+
+    var nav = '', panels = '', gi = 0;
+    data.chapters.forEach(function (ch, ci) {
+      var m = ch.title.match(/^Chapter\s+(\d+)\.?\s*(.*)$/i);
+      var numLabel = m ? m[1] : String(ci + 1), name = m ? m[2] : ch.title;
+      nav += '<button type="button" class="chapter-link' + (ci === 0 ? ' active' : '') + '" data-chapter="' + ci + '">' +
+             '<span class="num">' + esc(numLabel) + '</span><span class="name">' + esc(name) + '</span>' +
+             '<span class="count">' + ch.notes.length + '</span></button>';
+      panels += '<section class="chapter-panel' + (ci === 0 ? ' active' : '') + '" data-chapter="' + ci + '">' +
+                '<div class="chapter-head"><span class="kicker">Chapter ' + esc(numLabel) + '</span><h2>' + esc(name) + '</h2></div>';
+      ch.notes.forEach(function (n, ni) {
+        panels += '<section class="note" id="n' + gi + '" data-file="' + esc(n.file) + '" data-chapter="' + ci + '">' +
+          '<button type="button" class="note-toggle" aria-expanded="false" aria-controls="wrap' + gi + '">' +
+          '<span class="note-num">' + (ni + 1) + '</span><span class="note-label">' + esc(n.title) + '</span>' +
+          '<span class="chev">' + CHEV + '</span></button>' +
+          '<div class="note-wrap" id="wrap' + gi + '"><div class="note-inner"><div class="note-host"></div></div></div></section>';
+        gi++;
+      });
+      panels += '</section>';
+    });
+    $('chapterNav').innerHTML = nav;
+    $('panels').innerHTML = panels;
+
+    document.querySelectorAll('.chapter-link').forEach(function (l) {
+      l.addEventListener('click', function () {
+        showChapter(l.dataset.chapter);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (mobile.matches) setCollapsed(true, false);
       });
     });
-  });
-
-  var noteToggles = Array.prototype.slice.call(document.querySelectorAll(".note-toggle"));
-  noteToggles.forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      var section = btn.closest(".note");
-      var wrap = document.getElementById("wrap-" + btn.getAttribute("data-note"));
-      if (!section || !wrap) return;
-      var expanding = !section.classList.contains("expanded");
-      section.classList.toggle("expanded", expanding);
-      wrap.style.maxHeight = expanding ? wrap.scrollHeight + "px" : "0px";
+    document.querySelectorAll('.note').forEach(function (section) {
+      section.querySelector('.note-toggle').addEventListener('click', function () {
+        var on = !section.classList.contains('expanded');
+        setExpanded(section, on);
+        if (on && history.replaceState) history.replaceState(null, '', '#' + section.id);
+      });
     });
+
+    // open a note from the URL, e.g. ddia/#n3
+    var target = location.hash && document.getElementById(location.hash.slice(1));
+    if (target && target.classList.contains('note')) {
+      showChapter(target.dataset.chapter);
+      setExpanded(target, true);
+      setTimeout(function () { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 350);
+    }
+  }).catch(function () {
+    $('panels').innerHTML = '<div class="state">Could not load the notes list. Please refresh.</div>';
   });
 </script>
 </body>

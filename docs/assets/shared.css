@@ -1,0 +1,113 @@
+/* Shared by the landing page and the notes pages: themes, space background, theme picker. */
+
+/* The four theme colors are registered so changing them animates smoothly */
+@property --a1{syntax:'<color>';inherits:true;initial-value:#7c5cff}
+@property --a2{syntax:'<color>';inherits:true;initial-value:#ff6fb5}
+@property --a3{syntax:'<color>';inherits:true;initial-value:#ffb84d}
+@property --a4{syntax:'<color>';inherits:true;initial-value:#2ec4b6}
+
+:root{
+  color-scheme: light;
+  --a1:#7c5cff; --a2:#ff6fb5; --a3:#ffb84d; --a4:#2ec4b6;
+  transition:--a1 .45s ease,--a2 .45s ease,--a3 .45s ease,--a4 .45s ease;
+}
+html[data-theme="ocean"]   {--a1:#2f7bff;--a2:#22c1d6;--a3:#7c8cff;--a4:#5ee0b0}
+html[data-theme="sunset"]  {--a1:#ff7a45;--a2:#ff4f81;--a3:#ffc233;--a4:#b86bff}
+html[data-theme="rose"]    {--a1:#e5487f;--a2:#ff8fab;--a3:#a855f7;--a4:#ffb347}
+html[data-theme="graphite"]{--a1:#475569;--a2:#94a3b8;--a3:#64748b;--a4:#cbd5e1}
+/* nature greens */
+html[data-theme="forest"]  {--a1:#1f9d6b;--a2:#8bcf3f;--a3:#17b3a3;--a4:#f2b84b}
+html[data-theme="meadow"]  {--a1:#3fae49;--a2:#a8d93f;--a3:#ffd94d;--a4:#6bd1c0}
+html[data-theme="pine"]    {--a1:#146c4f;--a2:#2a9d8f;--a3:#7fb069;--a4:#c9a86a}
+html[data-theme="moss"]    {--a1:#6b8e23;--a2:#b5c94a;--a3:#d4a373;--a4:#7fb685}
+html[data-theme="sage"]    {--a1:#6f9a7f;--a2:#a8c3a0;--a3:#d9c9a3;--a4:#8fb8b0}
+
+:root{
+  --ink:#1d1b2e; --muted:#6b6880;
+  --a1-ink:color-mix(in srgb,var(--a1) 72%,black);
+  --bg:color-mix(in srgb,var(--a1) 3%,white);
+  --line:color-mix(in srgb,var(--a1) 14%,white);
+  --tint:color-mix(in srgb,var(--a1) 8%,white);
+  --tint2:color-mix(in srgb,var(--a1) 13%,white);
+  --card:#ffffffcc;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;overflow-x:hidden;position:relative}
+
+/* ---------- space background ---------- */
+.space{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+  background-image:radial-gradient(color-mix(in srgb,var(--a1) 18%,white) 1px,transparent 1px);background-size:30px 30px}
+.space .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.5;will-change:transform}
+.space .b1{width:48vw;height:48vw;left:-12vw;top:-14vw;background:var(--a1);animation:drift1 20s ease-in-out infinite alternate}
+.space .b2{width:40vw;height:40vw;right:-10vw;top:6vh;background:var(--a2);animation:drift2 24s ease-in-out infinite alternate}
+.space .b3{width:36vw;height:36vw;left:28vw;bottom:-16vw;background:var(--a3);animation:drift3 22s ease-in-out infinite alternate}
+.space .b4{width:26vw;height:26vw;right:18vw;bottom:8vh;background:var(--a4);opacity:.38;animation:drift1 27s ease-in-out infinite alternate-reverse}
+@keyframes drift1{to{transform:translate(8vw,6vh) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-9vw,10vh) scale(.9)}}
+@keyframes drift3{to{transform:translate(-6vw,-9vh) scale(1.2)}}
+.space .veil{position:absolute;inset:0;background:linear-gradient(color-mix(in srgb,var(--bg) 22%,transparent),color-mix(in srgb,var(--bg) 46%,transparent))}
+.space canvas{position:absolute;inset:0;width:100%;height:100%}
+
+/* big orbiting solar system, centered behind the page */
+.cosmos{--s:max(100vw,100vh);position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);
+  margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);will-change:transform}
+.cosmos *{position:absolute}
+.cosmos .sun{left:50%;top:50%;width:calc(var(--s)*.13);height:calc(var(--s)*.13);margin:calc(var(--s)*-.065);border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--a3) 65%,white) 0,color-mix(in srgb,var(--a3) 30%,transparent) 30%,transparent 70%);
+  animation:breathe 8s ease-in-out infinite}
+.cosmos .sun::after{content:"";left:36%;top:36%;width:28%;height:28%;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,var(--a3) 55%,var(--a2));box-shadow:0 0 40px color-mix(in srgb,var(--a3) 70%,transparent)}
+@keyframes breathe{50%{transform:scale(1.14);opacity:.8}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.cosmos .ring{--rad:calc(var(--s)*var(--k));left:50%;top:50%;width:calc(var(--rad)*2);height:calc(var(--rad)*2);
+  margin:calc(var(--rad)*-1) 0 0 calc(var(--rad)*-1);border-radius:50%;
+  border:1.5px solid color-mix(in srgb,var(--a1) 34%,transparent);animation:spin var(--dur) linear infinite}
+.cosmos .ring.dash{border-style:dashed;border-color:color-mix(in srgb,var(--a2) 48%,transparent)}
+.cosmos .ring.dots{border-style:dotted;border-width:2px;border-color:color-mix(in srgb,var(--a1) 42%,transparent)}
+.cosmos .ring.rev{animation-direction:reverse}
+
+.cosmos .n{left:50%;top:50%;width:0;height:0;transform:rotate(var(--a)) translateY(calc(var(--rad)*-1))}
+.cosmos .pl{left:calc(var(--sz)/-2);top:calc(var(--sz)/-2);width:var(--sz);height:var(--sz);border-radius:50%;
+  rotate:calc(var(--a)*-1);animation:spin var(--dur) linear infinite reverse;
+  background:radial-gradient(circle at 32% 28%,color-mix(in srgb,var(--c) 28%,#fff) 0,var(--c) 52%,color-mix(in srgb,var(--c) 68%,#2a2540) 100%);
+  box-shadow:0 0 calc(var(--sz)*.9) color-mix(in srgb,var(--c) 32%,transparent);opacity:.92}
+.cosmos .ring.rev .pl{animation-direction:normal}
+.cosmos .pl.sat::after{content:"";left:-55%;top:32%;width:210%;height:36%;border-radius:50%;rotate:-18deg;
+  border:max(2px,calc(var(--sz)*.07)) solid color-mix(in srgb,var(--c) 50%,transparent)}
+.cosmos .pl.hollow{background:transparent;box-shadow:none;border:2px solid color-mix(in srgb,var(--c) 70%,transparent);opacity:.8}
+.cosmos .moon{inset:-75%;border-radius:50%;border:1px dashed color-mix(in srgb,var(--a1) 30%,transparent);animation:spin 11s linear infinite}
+.cosmos .moon::after{content:"";left:50%;top:0;width:calc(var(--sz)*.3);height:calc(var(--sz)*.3);margin:calc(var(--sz)*-.15) 0 0 calc(var(--sz)*-.15);
+  border-radius:50%;background:var(--a1);box-shadow:0 0 12px color-mix(in srgb,var(--a1) 60%,transparent)}
+
+/* ---------- theme picker ---------- */
+.themes{position:fixed;top:18px;right:20px;z-index:40;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;
+  background:#ffffffd9;backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;
+  box-shadow:0 8px 26px color-mix(in srgb,var(--a1) 18%,transparent);animation:slideDown .8s cubic-bezier(.2,.8,.2,1) both .2s}
+@keyframes slideDown{from{opacity:0;transform:translateY(-18px)}}
+.themes-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;min-width:58px}
+.themes-label b{color:var(--a1-ink);font-weight:700}
+.swatches{display:flex;align-items:center;gap:8px}
+.sw-sep{width:1px;height:18px;background:var(--line);margin:0 4px}
+.swatch{--s1:#7c5cff;--s2:#ff6fb5;width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;
+  background:linear-gradient(135deg,var(--s1),var(--s2));box-shadow:0 0 0 1px var(--line);
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
+.swatch:hover{transform:scale(1.18)}
+.swatch:focus-visible{outline:3px solid var(--a1);outline-offset:3px}
+.swatch[aria-checked="true"]{box-shadow:0 0 0 2px var(--ink);transform:scale(1.1)}
+@media (max-width:900px){.themes{flex-wrap:wrap;justify-content:center;border-radius:22px;max-width:calc(100vw - 24px)}}
+@media (max-width:520px){
+  .themes{position:absolute;left:12px;right:12px;top:12px;justify-content:center;padding:8px 12px;animation:none}
+  .themes-label{display:none}
+  .swatches{flex-wrap:wrap;justify-content:center;gap:6px}
+  .swatch{width:24px;height:24px}
+}
+
+/* ---------- shared bits ---------- */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+}

@@ -5,126 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Learning</title>
-<script>
-  // Apply the saved theme before first paint so there is no flash
-  try { var t = localStorage.getItem('learning-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/shared.css?v=3">
+<script src="assets/shared.js?v=3"></script>
 <style>
-  /* The four theme colors are registered so changing them animates smoothly */
-  @property --a1{syntax:'<color>';inherits:true;initial-value:#7c5cff}
-  @property --a2{syntax:'<color>';inherits:true;initial-value:#ff6fb5}
-  @property --a3{syntax:'<color>';inherits:true;initial-value:#ffb84d}
-  @property --a4{syntax:'<color>';inherits:true;initial-value:#2ec4b6}
-
-  :root{
-    color-scheme: light;
-    --a1:#7c5cff; --a2:#ff6fb5; --a3:#ffb84d; --a4:#2ec4b6;
-    transition:--a1 .45s ease,--a2 .45s ease,--a3 .45s ease,--a4 .45s ease;
-  }
-  html[data-theme="ocean"]   {--a1:#2f7bff;--a2:#22c1d6;--a3:#7c8cff;--a4:#5ee0b0}
-  html[data-theme="sunset"]  {--a1:#ff7a45;--a2:#ff4f81;--a3:#ffc233;--a4:#b86bff}
-  /* nature greens */
-  html[data-theme="forest"]  {--a1:#1f9d6b;--a2:#8bcf3f;--a3:#17b3a3;--a4:#f2b84b}
-  html[data-theme="meadow"]  {--a1:#3fae49;--a2:#a8d93f;--a3:#ffd94d;--a4:#6bd1c0}
-  html[data-theme="pine"]    {--a1:#146c4f;--a2:#2a9d8f;--a3:#7fb069;--a4:#c9a86a}
-  html[data-theme="moss"]    {--a1:#6b8e23;--a2:#b5c94a;--a3:#d4a373;--a4:#7fb685}
-  html[data-theme="sage"]    {--a1:#6f9a7f;--a2:#a8c3a0;--a3:#d9c9a3;--a4:#8fb8b0}
-  html[data-theme="rose"]    {--a1:#e5487f;--a2:#ff8fab;--a3:#a855f7;--a4:#ffb347}
-  html[data-theme="graphite"]{--a1:#475569;--a2:#94a3b8;--a3:#64748b;--a4:#cbd5e1}
-
-  :root{
-    --ink:#1d1b2e; --muted:#6b6880;
-    --a1-ink:color-mix(in srgb,var(--a1) 72%,black);
-    --bg:color-mix(in srgb,var(--a1) 3%,white);
-    --line:color-mix(in srgb,var(--a1) 14%,white);
-    --tint:color-mix(in srgb,var(--a1) 8%,white);
-    --tint2:color-mix(in srgb,var(--a1) 13%,white);
-    --card:#ffffffcc;
-  }
-  *{box-sizing:border-box;margin:0}
-  html{scroll-behavior:smooth}
-  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;overflow-x:hidden;position:relative}
-
-  /* ---------- animated background ---------- */
-  .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
-    background-image:radial-gradient(color-mix(in srgb,var(--a1) 22%,white) 1px,transparent 1px);background-size:26px 26px}
-  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;will-change:transform}
-  .b1{width:46vw;height:46vw;left:-10vw;top:-12vw;background:var(--a1);animation:drift1 18s ease-in-out infinite alternate}
-  .b2{width:38vw;height:38vw;right:-8vw;top:8vh;background:var(--a2);animation:drift2 22s ease-in-out infinite alternate}
-  .b3{width:34vw;height:34vw;left:30vw;bottom:-14vw;background:var(--a3);animation:drift3 20s ease-in-out infinite alternate}
-  .b4{width:24vw;height:24vw;right:20vw;bottom:10vh;background:var(--a4);opacity:.4;animation:drift1 25s ease-in-out infinite alternate-reverse}
-  @keyframes drift1{to{transform:translate(8vw,6vh) scale(1.15)}}
-  @keyframes drift2{to{transform:translate(-9vw,10vh) scale(.9)}}
-  @keyframes drift3{to{transform:translate(-6vw,-9vh) scale(1.2)}}
-  .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(color-mix(in srgb,var(--bg) 80%,transparent),color-mix(in srgb,var(--bg) 93%,transparent))}
-
-  /* ---------- orbit artwork (hero, right side) ---------- */
-  .orbit-wrap{display:grid;place-items:center;pointer-events:none;user-select:none}
-  .orbit{position:relative;width:380px;height:380px;transition:transform .25s ease-out;will-change:transform}
-  .orbit *{position:absolute}
-  .glow{inset:50px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--a1) 22%,transparent),transparent 68%);animation:breathe 6s ease-in-out infinite}
-  @keyframes breathe{50%{transform:scale(1.12);opacity:.75}}
-
-  /* radar sweep */
-  .sweep{inset:6px;border-radius:50%;animation:spin 7s linear infinite;
-    background:conic-gradient(from 0deg,transparent 0 292deg,color-mix(in srgb,var(--a1) 24%,transparent) 360deg);
-    -webkit-mask:radial-gradient(circle,transparent 0 17%,#000 18%);mask:radial-gradient(circle,transparent 0 17%,#000 18%)}
-
-  /* rings spin around the center; --rad is the ring radius */
-  .ring{--rad:70px;left:50%;top:50%;width:calc(var(--rad)*2);height:calc(var(--rad)*2);margin:calc(var(--rad)*-1) 0 0 calc(var(--rad)*-1);
-    border-radius:50%;border:1.5px solid color-mix(in srgb,var(--a1) 38%,transparent)}
-  .r1{--rad:70px;animation:spin 22s linear infinite}
-  .r2{--rad:118px;border-style:dashed;border-color:color-mix(in srgb,var(--a2) 55%,transparent);animation:spin 34s linear infinite reverse}
-  .r3{--rad:168px;border-style:dotted;border-width:2px;border-color:color-mix(in srgb,var(--a1) 45%,transparent);animation:spin 50s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* nodes sit on the ring at evenly spaced angles (--a) */
-  .orbit .n{left:50%;top:50%;width:14px;height:14px;margin:-7px;transform:rotate(var(--a)) translateY(calc(var(--rad)*-1))}
-  .orbit .n::before{content:"";position:absolute;inset:0}
-  .r1 .n::before{border-radius:50%;background:linear-gradient(135deg,var(--c,var(--a1)),var(--a2));box-shadow:0 0 14px color-mix(in srgb,var(--c,var(--a1)) 60%,transparent)}
-  .r2 .n::before{border-radius:4px;background:var(--c,var(--a3));transform:rotate(45deg);box-shadow:0 0 14px color-mix(in srgb,var(--c,var(--a3)) 55%,transparent)}
-  .r3 .n::before{border-radius:50%;background:#fff;border:2.5px solid var(--c,var(--a2));box-shadow:0 0 12px color-mix(in srgb,var(--c,var(--a2)) 45%,transparent)}
-  .r3 .n.s::before{background:var(--a4);border:0;inset:2px;box-shadow:0 0 10px color-mix(in srgb,var(--a4) 55%,transparent)}
-
-  /* core with expanding ripples */
-  .core{left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;
-    background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 10px 30px color-mix(in srgb,var(--a1) 45%,transparent);animation:pulse 3s ease-in-out infinite}
-  .core::before,.core::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--a1);animation:ripple 3s ease-out infinite}
-  .core::after{animation-delay:1.5s}
-  @keyframes pulse{50%{transform:scale(1.1)}}
-  @keyframes ripple{from{transform:scale(1);opacity:.6}to{transform:scale(3.4);opacity:0}}
-  .core svg{position:static;width:22px;height:22px;margin:12px;color:#fff;display:block}
-
-  @media (max-width:860px){
-    .orbit-wrap{display:block;position:relative;height:300px;margin-top:10px}
-    .orbit{position:absolute;left:50%;top:50%;margin:-190px 0 0 -190px;transform:scale(.78)}
-  }
-
-  /* ---------- theme picker ---------- */
-  .themes{position:fixed;top:18px;right:20px;z-index:20;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;
-    background:#ffffffd9;backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;
-    box-shadow:0 8px 26px color-mix(in srgb,var(--a1) 18%,transparent);animation:slideDown .8s cubic-bezier(.2,.8,.2,1) both .2s}
-  @keyframes slideDown{from{opacity:0;transform:translateY(-18px)}}
-  .themes-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;min-width:58px}
-  .themes-label b{color:var(--a1-ink);font-weight:700}
-  .swatches{display:flex;align-items:center;gap:8px}
-  .sw-sep{width:1px;height:18px;background:var(--line);margin:0 4px}
-  @media (max-width:900px){.themes{flex-wrap:wrap;justify-content:center;border-radius:22px;max-width:calc(100vw - 24px)}}
-  .swatch{--s1:#7c5cff;--s2:#ff6fb5;width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;
-    background:linear-gradient(135deg,var(--s1),var(--s2));box-shadow:0 0 0 1px var(--line);
-    transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
-  .swatch:hover{transform:scale(1.18)}
-  .swatch:focus-visible{outline:3px solid var(--a1);outline-offset:3px}
-  .swatch[aria-checked="true"]{box-shadow:0 0 0 2px var(--ink);transform:scale(1.1)}
-  @media (max-width:520px){.themes{left:12px;right:12px;top:12px;justify-content:center;padding:8px 12px;animation:none}.themes-label{display:none}.swatches{flex-wrap:wrap;justify-content:center;gap:6px}.swatch{width:24px;height:24px}}
-
-  /* ---------- hero ---------- */
-  .wrap{max-width:1040px;margin:0 auto;padding:12vh 24px 10vh}
-  .hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);align-items:center;gap:10px}
-  @media (max-width:860px){.hero{grid-template-columns:1fr}}
+  .wrap{max-width:1040px;margin:0 auto;padding:13vh 24px 10vh}
+  .hero{text-align:center;display:flex;flex-direction:column;align-items:center}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;letter-spacing:.04em;
     color:var(--a1-ink);background:#fff;border:1px solid var(--line);padding:6px 14px;border-radius:999px;
     box-shadow:0 4px 14px color-mix(in srgb,var(--a1) 12%,transparent)}
@@ -132,19 +20,21 @@
   .dot::after{content:"";position:absolute;inset:0;border-radius:50%;background:var(--a4);animation:ping 1.8s ease-out infinite}
   @keyframes ping{to{transform:scale(3.2);opacity:0}}
 
-  h1{font-family:Caveat,cursive;font-weight:700;font-size:clamp(64px,13vw,132px);line-height:.95;margin:22px 0 10px;
+  h1{font-family:Caveat,cursive;font-weight:700;font-size:clamp(72px,15vw,160px);line-height:.95;margin:22px 0 10px;
     background:linear-gradient(100deg,var(--a1),var(--a2),var(--a3),var(--a1));
     background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 8s linear infinite}
   @keyframes shine{to{background-position:300% 0}}
   .sub{font-size:clamp(18px,2.6vw,24px);color:var(--muted);min-height:1.6em}
   .sub b{color:var(--ink);font-weight:600;border-right:2px solid var(--a1);padding-right:3px;animation:blink 1s steps(1) infinite}
   @keyframes blink{50%{border-color:transparent}}
+  .scroll-hint{margin-top:34px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+    color:var(--a1-ink);background:#fff;border:1px solid var(--line);animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{50%{transform:translateY(8px)}}
 
-  .section-title{display:flex;align-items:center;gap:12px;margin:64px 0 18px;font-size:14px;font-weight:700;
+  .section-title{display:flex;align-items:center;gap:12px;margin:44px 0 18px;font-size:14px;font-weight:700;
     letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
   .section-title::after{content:"";flex:1;height:1px;background:var(--line)}
 
-  /* ---------- cards ---------- */
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
   .card{--mx:50%;--my:50%;position:relative;display:block;text-decoration:none;color:inherit;padding:28px;border-radius:22px;
     background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
@@ -168,7 +58,7 @@
     background:var(--tint);border:1px solid var(--tint2);transition:transform .2s,background .2s}
   .card:hover .chapters li{background:var(--tint2)}
   .chapters li:hover{transform:translateX(6px)}
-  .chapters .n{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;
+  .chapters .num{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff;
     background:linear-gradient(135deg,var(--a1),var(--a2))}
   .chapters .t{flex:1;line-height:1.3}
   .chapters .c{flex:none;font-size:12px;font-weight:600;color:var(--a1-ink);background:#fff;border-radius:999px;padding:3px 9px}
@@ -183,79 +73,24 @@
   .plus{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
     color:var(--a1);background:#fff;border:1px solid var(--line);animation:bob 3s ease-in-out infinite}
   .plus svg{width:24px;height:24px}
-  @keyframes bob{50%{transform:translateY(-8px)}}
 
   footer{margin-top:80px;text-align:center;color:var(--muted);font-size:13px}
   footer a{color:var(--a1-ink);text-decoration:none;font-weight:600}
   footer a:hover{text-decoration:underline}
-
-  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
-  .reveal.in{opacity:1;transform:none}
-
-  @media (prefers-reduced-motion:reduce){
-    *,*::before,*::after{animation:none!important;transition:none!important}
-    .reveal{opacity:1;transform:none}
-  }
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true">
-  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
-</div>
-
-<!-- theme picker -->
-<div class="themes" role="radiogroup" aria-label="Color theme">
-  <span class="themes-label">Theme <b id="themeName">Violet</b></span>
-  <div class="swatches">
-    <button type="button" class="swatch" role="radio" data-theme="violet" data-name="Violet" aria-label="Violet theme" title="Violet" style="--s1:#7c5cff;--s2:#ff6fb5"></button>
-    <button type="button" class="swatch" role="radio" data-theme="ocean" data-name="Ocean" aria-label="Ocean theme" title="Ocean" style="--s1:#2f7bff;--s2:#22c1d6"></button>
-    <button type="button" class="swatch" role="radio" data-theme="sunset" data-name="Sunset" aria-label="Sunset theme" title="Sunset" style="--s1:#ff7a45;--s2:#ff4f81"></button>
-    <button type="button" class="swatch" role="radio" data-theme="rose" data-name="Rose" aria-label="Rose theme" title="Rose" style="--s1:#e5487f;--s2:#ff8fab"></button>
-    <button type="button" class="swatch" role="radio" data-theme="graphite" data-name="Graphite" aria-label="Graphite theme" title="Graphite" style="--s1:#475569;--s2:#94a3b8"></button>
-    <span class="sw-sep" aria-hidden="true"></span>
-    <button type="button" class="swatch" role="radio" data-theme="forest" data-name="Forest" aria-label="Forest theme" title="Forest" style="--s1:#1f9d6b;--s2:#8bcf3f"></button>
-    <button type="button" class="swatch" role="radio" data-theme="meadow" data-name="Meadow" aria-label="Meadow theme" title="Meadow" style="--s1:#3fae49;--s2:#d6e84a"></button>
-    <button type="button" class="swatch" role="radio" data-theme="pine" data-name="Pine" aria-label="Pine theme" title="Pine" style="--s1:#146c4f;--s2:#2a9d8f"></button>
-    <button type="button" class="swatch" role="radio" data-theme="moss" data-name="Moss" aria-label="Moss theme" title="Moss" style="--s1:#6b8e23;--s2:#d4a373"></button>
-    <button type="button" class="swatch" role="radio" data-theme="sage" data-name="Sage" aria-label="Sage theme" title="Sage" style="--s1:#6f9a7f;--s2:#d9c9a3"></button>
-  </div>
-</div>
-
 <main class="wrap">
   <div class="hero">
-    <div class="hero-text">
-      <span class="eyebrow reveal"><span class="dot"></span>Always learning</span>
-      <h1 class="reveal">Learning</h1>
-      <p class="sub reveal">My notes on <b id="word">data systems</b></p>
-    </div>
-
-    <div class="orbit-wrap reveal" aria-hidden="true">
-      <div class="orbit" id="orbit">
-        <div class="glow"></div>
-        <div class="sweep"></div>
-        <div class="ring r3">
-          <i class="n" style="--a:0deg"></i><i class="n s" style="--a:45deg"></i>
-          <i class="n" style="--a:90deg"></i><i class="n s" style="--a:135deg"></i>
-          <i class="n" style="--a:180deg"></i><i class="n s" style="--a:225deg"></i>
-          <i class="n" style="--a:270deg"></i><i class="n s" style="--a:315deg"></i>
-        </div>
-        <div class="ring r2">
-          <i class="n" style="--a:0deg;--c:var(--a3)"></i>
-          <i class="n" style="--a:120deg;--c:var(--a4)"></i>
-          <i class="n" style="--a:240deg;--c:var(--a1)"></i>
-        </div>
-        <div class="ring r1">
-          <i class="n" style="--a:0deg"></i>
-          <i class="n" style="--a:180deg;--c:var(--a2)"></i>
-        </div>
-        <div class="core">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 21 8 12 13 3 8Z"/><path d="M3 12.5 12 17.5 21 12.5"/><path d="M3 17 12 22 21 17"/></svg>
-        </div>
-      </div>
-    </div>
+    <span class="eyebrow reveal"><span class="dot"></span>Always learning</span>
+    <h1 class="reveal">Learning</h1>
+    <p class="sub reveal">My notes on <b id="word">data systems</b></p>
+    <a class="scroll-hint reveal" href="#notebooks" aria-label="Jump to notebooks">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </a>
   </div>
 
-  <div class="section-title reveal">Notebooks</div>
+  <div class="section-title reveal" id="notebooks">Notebooks</div>
 
   <div class="grid">
     <a class="card reveal" href="ddia/" aria-label="Open Designing Data-Intensive Applications notes">
@@ -269,8 +104,8 @@
       <h2>Designing Data-Intensive Applications</h2>
       <p>Reading notes with diagrams and trade-offs, organized chapter by chapter.</p>
       <ul class="chapters">
-        <li><span class="n">1</span><span class="t">Trade-offs in Data Systems Architecture</span><span class="c">6 notes</span></li>
-        <li><span class="n">2</span><span class="t">Defining Nonfunctional Requirements</span><span class="c">5 notes</span></li>
+        <li><span class="num">1</span><span class="t">Trade-offs in Data Systems Architecture</span><span class="c">6 notes</span></li>
+        <li><span class="num">2</span><span class="t">Defining Nonfunctional Requirements</span><span class="c">5 notes</span></li>
       </ul>
       <span class="cta">Open notebook
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -292,35 +127,7 @@
 </main>
 
 <script>
-  // ---- Theme picker: applies instantly and is remembered ----
-  var root = document.documentElement;
-  var swatches = Array.prototype.slice.call(document.querySelectorAll('.swatch'));
-  var nameEl = document.getElementById('themeName');
-  function setTheme(id, save) {
-    var match = swatches.filter(function (s) { return s.dataset.theme === id; })[0] || swatches[0];
-    root.dataset.theme = match.dataset.theme;
-    swatches.forEach(function (s) {
-      s.setAttribute('aria-checked', String(s === match));
-      s.tabIndex = s === match ? 0 : -1;
-    });
-    nameEl.textContent = match.dataset.name;
-    if (save) { try { localStorage.setItem('learning-theme', match.dataset.theme); } catch (e) {} }
-  }
-  swatches.forEach(function (s, i) {
-    s.addEventListener('click', function () { setTheme(s.dataset.theme, true); });
-    s.addEventListener('mouseenter', function () { nameEl.textContent = s.dataset.name; });
-    s.addEventListener('mouseleave', function () { nameEl.textContent = root.dataset.theme.charAt(0).toUpperCase() + root.dataset.theme.slice(1); });
-    s.addEventListener('keydown', function (e) {
-      var d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
-      if (!d) return;
-      e.preventDefault();
-      var next = swatches[(i + d + swatches.length) % swatches.length];
-      setTheme(next.dataset.theme, true); next.focus();
-    });
-  });
-  setTheme(root.dataset.theme, false);
-
-  // ---- Fade/slide elements in one after another ----
+  // Fade/slide elements in one after another
   var items = document.querySelectorAll('.reveal');
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
@@ -329,7 +136,7 @@
   }, { threshold: 0.15 });
   items.forEach(function (el, i) { el.style.transitionDelay = (i * 90) + 'ms'; io.observe(el); });
 
-  // ---- Spotlight + gentle 3D tilt that follows the mouse on cards ----
+  // Spotlight + gentle 3D tilt that follows the mouse on cards
   document.querySelectorAll('.card:not(.soon)').forEach(function (card) {
     card.addEventListener('mousemove', function (e) {
       var r = card.getBoundingClientRect();
@@ -342,7 +149,7 @@
     card.addEventListener('mouseleave', function () { card.style.transform = ''; });
   });
 
-  // ---- Rotating typed word in the subtitle ----
+  // Rotating typed word in the subtitle
   var words = ['data systems', 'scalability', 'fault tolerance', 'trade-offs', 'distributed design'];
   var el = document.getElementById('word'), wi = 0, ci = words[0].length, del = true;
   if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -353,24 +160,6 @@
       setTimeout(tick, del ? 35 : 70);
     }, 2200);
   }
-
-  // ---- Orbit artwork tilts gently toward the cursor (desktop only) ----
-  var orbit = document.getElementById('orbit');
-  var wide = window.matchMedia('(min-width: 861px)');
-  window.addEventListener('mousemove', function (e) {
-    if (!wide.matches) { orbit.style.transform = ''; return; }
-    var x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
-    orbit.style.transform = 'perspective(900px) rotateY(' + (x * 16) + 'deg) rotateX(' + (y * -16) + 'deg)';
-  });
-
-  // ---- Blobs lean slightly away from the cursor ----
-  var blobs = document.querySelectorAll('.blob');
-  window.addEventListener('mousemove', function (e) {
-    var x = e.clientX / innerWidth - .5, y = e.clientY / innerHeight - .5;
-    blobs.forEach(function (b, i) {
-      b.style.translate = (x * (i + 1) * -18) + 'px ' + (y * (i + 1) * -18) + 'px';
-    });
-  });
 </script>
 </body>
 </html>

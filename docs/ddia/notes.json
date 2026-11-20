@@ -1,0 +1,61 @@
+{
+  "title": "Designing Data-Intensive Applications",
+  "subtitle": "Personal reading notes, organized by chapter.",
+  "byline": "by Ujjwal Prazapati",
+  "chapters": [
+    {
+      "title": "Chapter 1. Trade-offs in Data Systems Architecture",
+      "notes": [
+        {
+          "title": "Real-Time OLAP vs. Traditional OLAP",
+          "file": "notes/ch01/pinot-vs-traditional-olap-notes.html"
+        },
+        {
+          "title": "Data Warehouse vs. Data Lake",
+          "file": "notes/ch01/data-warehouse-vs-data-lake-notes.html"
+        },
+        {
+          "title": "Cloud vs. Self-Hosting",
+          "file": "notes/ch01/cloud-vs-self-hosting-notes.html"
+        },
+        {
+          "title": "Cloud-Native System Architecture",
+          "file": "notes/ch01/cloud-native-architecture-notes.html"
+        },
+        {
+          "title": "Microservices and Serverless",
+          "file": "notes/ch01/microservices-and-serverless-notes.html"
+        },
+        {
+          "title": "Cloud Computing vs. Supercomputing",
+          "file": "notes/ch01/cloud-vs-supercomputing-notes.html"
+        }
+      ]
+    },
+    {
+      "title": "Chapter 2. Defining Nonfunctional Requirements",
+      "notes": [
+        {
+          "title": "Social Network Home Timelines",
+          "file": "notes/ch02/social-network-home-timelines-notes.html"
+        },
+        {
+          "title": "Describing Performance",
+          "file": "notes/ch02/describing-performance-notes.html"
+        },
+        {
+          "title": "Response Time Metrics and Fault Tolerance",
+          "file": "notes/ch02/response-time-metrics-and-fault-tolerance-notes.html"
+        },
+        {
+          "title": "Redundancy, Software Faults, and Humans",
+          "file": "notes/ch02/redundancy-software-faults-and-humans-notes.html"
+        },
+        {
+          "title": "Scalability",
+          "file": "notes/ch02/scalability-notes.html"
+        }
+      ]
+    }
+  ]
+}
