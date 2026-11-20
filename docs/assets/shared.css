@@ -29,9 +29,15 @@ html[data-theme="sage"]    {--a1:#6f9a7f;--a2:#a8c3a0;--a3:#d9c9a3;--a4:#8fb8b0}
   --line:color-mix(in srgb,var(--a1) 14%,white);
   --tint:color-mix(in srgb,var(--a1) 8%,white);
   --tint2:color-mix(in srgb,var(--a1) 13%,white);
-  --card:#ffffffcc;
-  /* surface colors, switched by the dark Galaxy theme */
-  --solid:#fff; --glass-strong:#ffffffd9; --topbar:#ffffff66; --card-soft:#ffffff80;
+  /* surfaces: a base color plus an opacity that the transparency slider (--t, 0..1) lowers */
+  --t:0;
+  --surf:#ffffff; --k-card:80%; --k-strong:85%; --k-top:40%; --k-soft:50%;
+  --card:color-mix(in srgb,var(--surf) calc(var(--k-card) * (1 - var(--t) * .8)),transparent);
+  --glass-strong:color-mix(in srgb,var(--surf) calc(var(--k-strong) * (1 - var(--t) * .8)),transparent);
+  --topbar:color-mix(in srgb,var(--surf) calc(var(--k-top) * (1 - var(--t) * .8)),transparent);
+  --card-soft:color-mix(in srgb,var(--surf) calc(var(--k-soft) * (1 - var(--t) * .8)),transparent);
+  --pill:color-mix(in srgb,var(--surf) 88%,transparent);
+  --solid:#fff;
   --glow:#ffffffaa; --rule-soft:#ffffffb0; --swatch-ring:#fff;
   --title-filter:drop-shadow(0 2px 0 #ffffffcc) drop-shadow(0 6px 22px #ffffff99);
   --title-grad:linear-gradient(100deg,var(--a1-ink),var(--a1),var(--a2),var(--a1-ink));
@@ -97,7 +103,7 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 
 /* ---------- theme picker ---------- */
 .themes{position:fixed;top:18px;right:20px;z-index:40;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;
-  background:var(--glass-strong);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;
+  background:var(--pill);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;
   box-shadow:0 8px 26px color-mix(in srgb,var(--a1) 18%,transparent);animation:slideDown .8s cubic-bezier(.2,.8,.2,1) both .2s}
 @keyframes slideDown{from{opacity:0;transform:translateY(-18px)}}
 .themes-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;min-width:58px}
@@ -149,24 +155,49 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 @keyframes floaty{50%{transform:translateY(-14px)}}
 @media (max-width:700px){.space .giant{left:-14vmin;bottom:6vh;width:42vmin;height:42vmin}.space .lune{right:4vw;top:15vh;width:16vmin;height:16vmin}}
 
-/* ---------- Galaxy theme (dark): particle spiral galaxy on black ---------- */
-html[data-theme="galaxy"]{
+/* ---------- dark themes: Galaxy (particle spiral) and Sticks (moving white sticks) ---------- */
+html[data-theme="galaxy"],html[data-theme="sticks"]{
   color-scheme:dark;
-  --a1:#ff8a3d;--a2:#4fd1e6;--a3:#f2c46d;--a4:#8fe3d8;
-  --a1-ink:#ffb27a;
   --ink:#eef1f8;--muted:#a3acc2;
   --bg:#03040a;--line:#ffffff24;--tint:#ffffff0f;--tint2:#ffffff1a;
-  --card:#0e1120b3;--solid:#ffffff17;--glass-strong:#0b0e1cd9;--topbar:#05060fa6;--card-soft:#0e112066;
+  --surf:#0b0e1c;--k-card:70%;--k-strong:85%;--k-top:65%;--k-soft:40%;--solid:#ffffff17;
   --glow:#000000b3;--rule-soft:#ffffff2e;--swatch-ring:#1b1f33;--title-filter:none;
+}
+html[data-theme="galaxy"]{
+  --a1:#ff8a3d;--a2:#4fd1e6;--a3:#f2c46d;--a4:#8fe3d8;
+  --a1-ink:#ffb27a;
   --title-grad:linear-gradient(100deg,#ffb27a,#ffe2b8,#a6edf2,#4fd1e6,#ffb27a);
   --icon-bg:linear-gradient(135deg,#ff8a3d40,#4fd1e640);
 }
+html[data-theme="sticks"]{
+  --a1:#dfe6f5;--a2:#8fa3c8;--a3:#ffffff;--a4:#7cc7ff;
+  --a1-ink:#f1f5ff;
+  --title-grad:linear-gradient(100deg,#ffffff,#b9c6e4,#ffffff,#7cc7ff,#ffffff);
+  --icon-bg:linear-gradient(135deg,#ffffff26,#7cc7ff30);
+}
 .space #galaxy{position:absolute;inset:0;width:100%;height:100%;display:none}
 html[data-theme="galaxy"] .space{background:radial-gradient(70% 55% at 50% 56%,#0a0e1d 0,#030409 62%,#000 100%)}
+html[data-theme="sticks"] .space{background:#000}
 html[data-theme="galaxy"] .space #galaxy{display:block}
-html[data-theme="galaxy"] .space .blob,
-html[data-theme="galaxy"] .space .galaxy,
-html[data-theme="galaxy"] .space .giant,
-html[data-theme="galaxy"] .space .lune,
-html[data-theme="galaxy"] .space .cosmos,
-html[data-theme="galaxy"] .space .veil{display:none}
+html[data-theme="galaxy"] .space .blob,html[data-theme="sticks"] .space .blob,
+html[data-theme="galaxy"] .space .galaxy,html[data-theme="sticks"] .space .galaxy,
+html[data-theme="galaxy"] .space .giant,html[data-theme="sticks"] .space .giant,
+html[data-theme="galaxy"] .space .lune,html[data-theme="sticks"] .space .lune,
+html[data-theme="galaxy"] .space .cosmos,html[data-theme="sticks"] .space .cosmos,
+html[data-theme="galaxy"] .space .veil,html[data-theme="sticks"] .space .veil{display:none}
+
+/* ---------- appearance panel (transparency slider) ---------- */
+.themes-more{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--solid);color:var(--a1-ink);
+  display:grid;place-items:center;cursor:pointer;padding:0;transition:transform .2s,background .2s}
+.themes-more:hover{transform:rotate(30deg) scale(1.08)}
+.themes-more:focus-visible{outline:3px solid var(--a1);outline-offset:3px}
+.themes-more svg{width:16px;height:16px}
+.themes-panel{position:absolute;right:0;top:calc(100% + 10px);width:min(320px,86vw);padding:16px 18px 14px;border-radius:18px;
+  background:color-mix(in srgb,var(--surf) 95%,transparent);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:0 20px 44px #00000030;
+  opacity:0;transform:translateY(-8px);pointer-events:none;transition:opacity .2s,transform .2s;color:var(--ink)}
+.themes-panel.open{opacity:1;transform:none;pointer-events:auto}
+.themes-panel label{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600}
+.themes-panel output{font-variant-numeric:tabular-nums;color:var(--a1-ink)}
+.themes-panel input[type=range]{width:100%;margin:12px 0 6px;accent-color:var(--a1);cursor:pointer}
+.themes-panel .hint{font-size:12px;line-height:1.45;color:var(--muted)}
+.themes-panel .reset{margin-top:10px;font:inherit;font-size:12px;font-weight:600;color:var(--a1-ink);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}

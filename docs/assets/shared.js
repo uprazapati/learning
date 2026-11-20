@@ -2,10 +2,13 @@
 (function () {
   var KEY = 'learning-theme';
   var root = document.documentElement;
+  var GLASS_KEY = 'learning-glass';
   try { var saved = localStorage.getItem(KEY); if (saved) root.dataset.theme = saved; } catch (e) {}
+  try { var g0 = localStorage.getItem(GLASS_KEY); if (g0 !== null) root.style.setProperty('--t', String(Number(g0) / 100)); } catch (e) {}
 
   var THEMES = [
     { id: 'galaxy',   name: 'Galaxy',   s1: '#ff8a3d', s2: '#4fd1e6' },
+    { id: 'sticks',   name: 'Sticks',   s1: '#111111', s2: '#ffffff' },
     null,
     { id: 'violet',   name: 'Violet',   s1: '#7c5cff', s2: '#ff6fb5' },
     { id: 'ocean',    name: 'Ocean',    s1: '#2f7bff', s2: '#22c1d6' },
@@ -70,8 +73,32 @@
                   '" aria-label="' + t.name + ' theme" title="' + t.name + '" style="--s1:' + t.s1 + ';--s2:' + t.s2 + '"></button>'
                 : '<span class="sw-sep" aria-hidden="true"></span>';
     });
-    box.innerHTML = html + '</div>';
+    html += '</div><button type="button" class="themes-more" id="themeMore" aria-label="Appearance settings" aria-expanded="false" aria-controls="themePanel" title="Transparency">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg></button>' +
+      '<div class="themes-panel" id="themePanel" role="group" aria-label="Appearance">' +
+      '<label for="glassRange">Surface transparency <output id="glassVal">0%</output></label>' +
+      '<input type="range" id="glassRange" min="0" max="100" step="1" value="0">' +
+      '<p class="hint">Raise it to see more of the background behind cards, the sidebar and notes.</p>' +
+      '<button type="button" class="reset" id="glassReset">Reset</button></div>';
+    box.innerHTML = html;
     document.body.appendChild(box);
+
+    var more = box.querySelector('#themeMore'), panel = box.querySelector('#themePanel');
+    var range = box.querySelector('#glassRange'), out = box.querySelector('#glassVal');
+    function setGlass(v, persist) {
+      v = Math.max(0, Math.min(100, Number(v) || 0));
+      root.style.setProperty('--t', String(v / 100));
+      range.value = String(v); out.textContent = v + '%';
+      if (persist) { try { localStorage.setItem(GLASS_KEY, String(v)); } catch (e) {} }
+    }
+    var g1 = null; try { g1 = localStorage.getItem(GLASS_KEY); } catch (e) {}
+    setGlass(g1 === null ? 0 : g1, false);
+    range.addEventListener('input', function () { setGlass(range.value, true); });
+    box.querySelector('#glassReset').addEventListener('click', function () { setGlass(0, true); });
+    function togglePanel(open) { panel.classList.toggle('open', open); more.setAttribute('aria-expanded', String(open)); }
+    more.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(!panel.classList.contains('open')); });
+    document.addEventListener('click', function (e) { if (!box.contains(e.target)) togglePanel(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') togglePanel(false); });
 
     var swatches = Array.prototype.slice.call(box.querySelectorAll('.swatch'));
     var nameEl = box.querySelector('#themeName');
@@ -230,9 +257,39 @@
       if (i === 5) return '#2a2540';
       return cs.getPropertyValue('--a' + (i + 1)).trim() || '#7c5cff';
     }
+    function smooth(a, b, x) { var u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
+    // white sticks on a staggered grid; every stick travels in a small circle, and the circles
+    // are out of step by distance from the middle, so rings of motion ripple outward
+    function drawSticks(t) {
+      var sec = reduce ? 0 : t / 1000, scroll = window.pageYOffset || 0;
+      var colSp = Math.min(96, Math.max(58, W / 17)), rowSp = colSp * .68, len = rowSp * .82, lw = Math.max(2.2, colSp * .042);
+      var ox = W / 2 + (cx - .5) * 40, oy = H * .5 + (cy - .5) * 30 - scroll * .12;
+      var mxp = cx * W, myp = cy * H;
+      var hole = Math.min(W, H) * .17 * (1 + .1 * Math.sin(sec * .9));
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = lw; ctx.lineCap = 'butt';
+      var rows = Math.ceil(H / rowSp) + 3, cols = Math.ceil(W / colSp) + 3;
+      for (var j = -1; j < rows; j++) {
+        for (var i = -1; i < cols; i++) {
+          var x0 = i * colSp + ((j & 1) ? colSp / 2 : 0), y0 = j * rowSp;
+          var dx = x0 - ox, dy = (y0 - oy) / .7, r = Math.sqrt(dx * dx + dy * dy) + .001;
+          var phi = r * .043 - sec * 1.7;
+          var amp = 8 + 3 * Math.sin(r * .006 - sec * .6);
+          var push = 34 * Math.sin(r * .043 - sec * 1.7);
+          var x = x0 + Math.cos(phi) * amp + dx / r * push, y = y0 + Math.sin(phi) * amp * .7 + dy / r * push * .7;
+          var mdx = x - mxp, mdy = y - myp, md = Math.sqrt(mdx * mdx + mdy * mdy);
+          if (md < 150) { var f = 1 - md / 150; x += mdx / (md + 1) * f * 46; y += mdy / (md + 1) * f * 46; }
+          var a = smooth(hole * .75, hole * 1.35, r);
+          if (a <= .02) continue;
+          ctx.globalAlpha = .92 * a;
+          ctx.beginPath(); ctx.moveTo(x, y - len / 2); ctx.lineTo(x, y + len / 2); ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
     function isDark() { return root.dataset.theme === 'galaxy'; }
     function draw(t) {
       ctx.clearRect(0, 0, W, H);
+      if (root.dataset.theme === 'sticks') { drawSticks(t); return; }
       var dark = isDark();
       if (dark && galaxy) galaxy.draw(t, cx, cy, window.pageYOffset || 0, parseColor(cs.getPropertyValue('--a1')), parseColor(cs.getPropertyValue('--a2')));
       var sy = window.pageYOffset || 0;

@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="assets/shared.css?v=5">
-<script src="assets/shared.js?v=5"></script>
+<link rel="stylesheet" href="assets/shared.css?v=7">
+<script src="assets/shared.js?v=6"></script>
 <style>
   .wrap{max-width:1040px;margin:0 auto;padding:13vh 24px 10vh}
   .hero{text-align:center;display:flex;flex-direction:column;align-items:center}
@@ -38,7 +38,7 @@
 
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
   .card{--mx:50%;--my:50%;position:relative;display:block;text-decoration:none;color:inherit;padding:28px;border-radius:22px;
-    background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);
+    background:var(--card);backdrop-filter:blur(calc(12px - var(--t) * 8px));border:1px solid var(--line);
     box-shadow:0 10px 30px color-mix(in srgb,var(--a1) 9%,transparent);overflow:hidden;
     transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s}
   .card::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .25s;
