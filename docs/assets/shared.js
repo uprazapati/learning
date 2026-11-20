@@ -3,12 +3,11 @@
   var KEY = 'learning-theme';
   var root = document.documentElement;
   var GLASS_KEY = 'learning-glass';
-  try { var saved = localStorage.getItem(KEY); if (saved) root.dataset.theme = saved; } catch (e) {}
+  try { var saved = localStorage.getItem(KEY); if (saved && /^(galaxy|violet|ocean|sunset|rose|graphite|forest|meadow|pine|moss|sage)$/.test(saved)) root.dataset.theme = saved; } catch (e) {}
   try { var g0 = localStorage.getItem(GLASS_KEY); if (g0 !== null) root.style.setProperty('--t', String(Number(g0) / 100)); } catch (e) {}
 
   var THEMES = [
     { id: 'galaxy',   name: 'Galaxy',   s1: '#ff8a3d', s2: '#4fd1e6' },
-    { id: 'sticks',   name: 'Sticks',   s1: '#111111', s2: '#ffffff' },
     null,
     { id: 'violet',   name: 'Violet',   s1: '#7c5cff', s2: '#ff6fb5' },
     { id: 'ocean',    name: 'Ocean',    s1: '#2f7bff', s2: '#22c1d6' },
@@ -257,42 +256,9 @@
       if (i === 5) return '#2a2540';
       return cs.getPropertyValue('--a' + (i + 1)).trim() || '#7c5cff';
     }
-    function smooth(a, b, x) { var u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
-    // White vertical sticks sit on concentric elliptical rings around an empty middle.
-    // Every ring orbits the middle; neighbouring rings turn in opposite directions and
-    // outer rings turn more slowly, so the sticks are always moving in circles.
-    function drawSticks(t) {
-      var sec = reduce ? 0 : t / 1000, scroll = window.pageYOffset || 0;
-      var ringSp = Math.min(88, Math.max(56, W / 16)), stickSp = ringSp * .7, len = ringSp * .62, lw = Math.max(2.4, ringSp * .045);
-      var ox = W / 2 + (cx - .5) * 40, oy = H * .5 + (cy - .5) * 30 - scroll * .12, FLAT = .7;
-      var mxp = cx * W, myp = cy * H;
-      var hole = Math.min(W, H) * .17 * (1 + .08 * Math.sin(sec * .9));
-      var maxR = Math.sqrt(Math.pow(W / 2 + 90, 2) + Math.pow((H / 2 + 90) / FLAT, 2));
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = lw; ctx.lineCap = 'butt';
-      for (var k = 0, r0 = hole * .8; r0 + k * ringSp < maxR; k++) {
-        var r = (r0 + k * ringSp) * (1 + .025 * Math.sin(sec * .8 + k * .6));    // rings breathe a little
-        var a = smooth(hole * .7, hole * 1.3, r);
-        if (a <= .02) continue;
-        var perim = 2 * Math.PI * Math.sqrt((r * r + r * FLAT * r * FLAT) / 2);
-        var n = Math.max(7, Math.round(perim / stickSp));
-        var speed = (k % 2 ? -1 : 1) * 46 / (r * .85);                          // about 46 px/s along every ring
-        var base = k * 1.31 + sec * speed;
-        for (var i = 0; i < n; i++) {
-          var th = base + i * 6.2832 / n;
-          var x = ox + Math.cos(th) * r, y = oy + Math.sin(th) * r * FLAT;
-          if (x < -60 || x > W + 60 || y < -60 || y > H + 60) continue;
-          var mdx = x - mxp, mdy = y - myp, md = Math.sqrt(mdx * mdx + mdy * mdy);
-          if (md < 150) { var f = 1 - md / 150; x += mdx / (md + 1) * f * 46; y += mdy / (md + 1) * f * 46; }
-          ctx.globalAlpha = .92 * a;
-          ctx.beginPath(); ctx.moveTo(x, y - len / 2); ctx.lineTo(x, y + len / 2); ctx.stroke();
-        }
-      }
-      ctx.globalAlpha = 1;
-    }
     function isDark() { return root.dataset.theme === 'galaxy'; }
     function draw(t) {
       ctx.clearRect(0, 0, W, H);
-      if (root.dataset.theme === 'sticks') { drawSticks(t); return; }
       var dark = isDark();
       if (dark && galaxy) galaxy.draw(t, cx, cy, window.pageYOffset || 0, parseColor(cs.getPropertyValue('--a1')), parseColor(cs.getPropertyValue('--a2')));
       var sy = window.pageYOffset || 0;

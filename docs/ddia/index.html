@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Source+Serif+4:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="../assets/shared.css?v=8">
+<link rel="stylesheet" href="../assets/shared.css?v=9">
 <script src="../assets/shared.js?v=6"></script>
 <style>
   /* ---------- layout: collapsible sidebar + content ---------- */
@@ -243,7 +243,7 @@
 
   // dark themes get the notes' dark-glass palette
   function syncNoteTheme() {
-    var th = document.documentElement.dataset.theme, dark = th === 'galaxy' || th === 'sticks';
+    var th = document.documentElement.dataset.theme, dark = th === 'galaxy';
     document.querySelectorAll('.note-host').forEach(function (h) { h.classList.toggle('dark', dark); });
   }
   new MutationObserver(syncNoteTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });

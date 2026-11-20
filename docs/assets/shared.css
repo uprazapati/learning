@@ -155,36 +155,27 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 @keyframes floaty{50%{transform:translateY(-14px)}}
 @media (max-width:700px){.space .giant{left:-14vmin;bottom:6vh;width:42vmin;height:42vmin}.space .lune{right:4vw;top:15vh;width:16vmin;height:16vmin}}
 
-/* ---------- dark themes: Galaxy (particle spiral) and Sticks (moving white sticks) ---------- */
-html[data-theme="galaxy"],html[data-theme="sticks"]{
+/* ---------- Galaxy theme (dark): particle spiral galaxy on black ---------- */
+html[data-theme="galaxy"]{
   color-scheme:dark;
+  --a1:#ff8a3d;--a2:#4fd1e6;--a3:#f2c46d;--a4:#8fe3d8;
+  --a1-ink:#ffb27a;
   --ink:#eef1f8;--muted:#a3acc2;
   --bg:#03040a;--line:#ffffff24;--tint:#ffffff0f;--tint2:#ffffff1a;
   --surf:#0b0e1c;--k-card:70%;--k-strong:85%;--k-top:65%;--k-soft:40%;--solid:#ffffff17;
   --glow:#000000b3;--rule-soft:#ffffff2e;--swatch-ring:#1b1f33;--title-filter:none;
-}
-html[data-theme="galaxy"]{
-  --a1:#ff8a3d;--a2:#4fd1e6;--a3:#f2c46d;--a4:#8fe3d8;
-  --a1-ink:#ffb27a;
   --title-grad:linear-gradient(100deg,#ffb27a,#ffe2b8,#a6edf2,#4fd1e6,#ffb27a);
   --icon-bg:linear-gradient(135deg,#ff8a3d40,#4fd1e640);
 }
-html[data-theme="sticks"]{
-  --a1:#dfe6f5;--a2:#8fa3c8;--a3:#ffffff;--a4:#7cc7ff;
-  --a1-ink:#f1f5ff;
-  --title-grad:linear-gradient(100deg,#ffffff,#b9c6e4,#ffffff,#7cc7ff,#ffffff);
-  --icon-bg:linear-gradient(135deg,#ffffff26,#7cc7ff30);
-}
 .space #galaxy{position:absolute;inset:0;width:100%;height:100%;display:none}
 html[data-theme="galaxy"] .space{background:radial-gradient(70% 55% at 50% 56%,#0a0e1d 0,#030409 62%,#000 100%)}
-html[data-theme="sticks"] .space{background:#000}
 html[data-theme="galaxy"] .space #galaxy{display:block}
-html[data-theme="galaxy"] .space .blob,html[data-theme="sticks"] .space .blob,
-html[data-theme="galaxy"] .space .galaxy,html[data-theme="sticks"] .space .galaxy,
-html[data-theme="galaxy"] .space .giant,html[data-theme="sticks"] .space .giant,
-html[data-theme="galaxy"] .space .lune,html[data-theme="sticks"] .space .lune,
-html[data-theme="galaxy"] .space .cosmos,html[data-theme="sticks"] .space .cosmos,
-html[data-theme="galaxy"] .space .veil,html[data-theme="sticks"] .space .veil{display:none}
+html[data-theme="galaxy"] .space .blob,
+html[data-theme="galaxy"] .space .galaxy,
+html[data-theme="galaxy"] .space .giant,
+html[data-theme="galaxy"] .space .lune,
+html[data-theme="galaxy"] .space .cosmos,
+html[data-theme="galaxy"] .space .veil{display:none}
 
 /* ---------- appearance panel (transparency slider) ---------- */
 .themes-more{flex:none;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--solid);color:var(--a1-ink);
