@@ -30,10 +30,17 @@ html[data-theme="sage"]    {--a1:#6f9a7f;--a2:#a8c3a0;--a3:#d9c9a3;--a4:#8fb8b0}
   --tint:color-mix(in srgb,var(--a1) 8%,white);
   --tint2:color-mix(in srgb,var(--a1) 13%,white);
   --card:#ffffffcc;
+  /* surface colors, switched by the dark Galaxy theme */
+  --solid:#fff; --glass-strong:#ffffffd9; --topbar:#ffffff66; --card-soft:#ffffff80;
+  --glow:#ffffffaa; --rule-soft:#ffffffb0; --swatch-ring:#fff;
+  --title-filter:drop-shadow(0 2px 0 #ffffffcc) drop-shadow(0 6px 22px #ffffff99);
+  --title-grad:linear-gradient(100deg,var(--a1-ink),var(--a1),var(--a2),var(--a1-ink));
+  --icon-bg:linear-gradient(135deg,var(--tint2),color-mix(in srgb,var(--a2) 18%,white));
 }
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
-body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;overflow-x:hidden;position:relative}
+body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;overflow-x:hidden;position:relative;
+  transition:background-color .6s ease,color .6s ease}
 
 /* ---------- space background ---------- */
 .space{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
@@ -90,14 +97,14 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
 
 /* ---------- theme picker ---------- */
 .themes{position:fixed;top:18px;right:20px;z-index:40;display:flex;align-items:center;gap:12px;padding:8px 10px 8px 16px;
-  background:#ffffffd9;backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;
+  background:var(--glass-strong);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:999px;
   box-shadow:0 8px 26px color-mix(in srgb,var(--a1) 18%,transparent);animation:slideDown .8s cubic-bezier(.2,.8,.2,1) both .2s}
 @keyframes slideDown{from{opacity:0;transform:translateY(-18px)}}
 .themes-label{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;min-width:58px}
 .themes-label b{color:var(--a1-ink);font-weight:700}
 .swatches{display:flex;align-items:center;gap:8px}
 .sw-sep{width:1px;height:18px;background:var(--line);margin:0 4px}
-.swatch{--s1:#7c5cff;--s2:#ff6fb5;width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;padding:0;
+.swatch{--s1:#7c5cff;--s2:#ff6fb5;width:26px;height:26px;border-radius:50%;border:2px solid var(--swatch-ring);cursor:pointer;padding:0;
   background:linear-gradient(135deg,var(--s1),var(--s2));box-shadow:0 0 0 1px var(--line);
   transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s}
 .swatch:hover{transform:scale(1.18)}
@@ -141,3 +148,25 @@ body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg
   box-shadow:0 0 50px #ffffffb0,inset -8px -10px 22px #2a254044;animation:floaty 11s ease-in-out infinite 1.5s}
 @keyframes floaty{50%{transform:translateY(-14px)}}
 @media (max-width:700px){.space .giant{left:-14vmin;bottom:6vh;width:42vmin;height:42vmin}.space .lune{right:4vw;top:15vh;width:16vmin;height:16vmin}}
+
+/* ---------- Galaxy theme (dark): particle spiral galaxy on black ---------- */
+html[data-theme="galaxy"]{
+  color-scheme:dark;
+  --a1:#ff8a3d;--a2:#4fd1e6;--a3:#f2c46d;--a4:#8fe3d8;
+  --a1-ink:#ffb27a;
+  --ink:#eef1f8;--muted:#a3acc2;
+  --bg:#03040a;--line:#ffffff24;--tint:#ffffff0f;--tint2:#ffffff1a;
+  --card:#0e1120b3;--solid:#ffffff17;--glass-strong:#0b0e1cd9;--topbar:#05060fa6;--card-soft:#0e112066;
+  --glow:#000000b3;--rule-soft:#ffffff2e;--swatch-ring:#1b1f33;--title-filter:none;
+  --title-grad:linear-gradient(100deg,#ffb27a,#ffe2b8,#a6edf2,#4fd1e6,#ffb27a);
+  --icon-bg:linear-gradient(135deg,#ff8a3d40,#4fd1e640);
+}
+.space #galaxy{position:absolute;inset:0;width:100%;height:100%;display:none}
+html[data-theme="galaxy"] .space{background:radial-gradient(70% 55% at 50% 56%,#0a0e1d 0,#030409 62%,#000 100%)}
+html[data-theme="galaxy"] .space #galaxy{display:block}
+html[data-theme="galaxy"] .space .blob,
+html[data-theme="galaxy"] .space .galaxy,
+html[data-theme="galaxy"] .space .giant,
+html[data-theme="galaxy"] .space .lune,
+html[data-theme="galaxy"] .space .cosmos,
+html[data-theme="galaxy"] .space .veil{display:none}
